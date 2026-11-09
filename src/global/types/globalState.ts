@@ -123,6 +123,14 @@ export type GlobalState = {
     followingPosts?: ApiMessage[];
     suggestedPosts?: ApiMessage[];
   };
+  // Nilak: Reels, short vertical videos from followed and suggested channels, kept in memory only
+  nilakReels?: {
+    isLoading?: boolean;
+    posts?: ApiMessage[];
+    // The next search offset per channel; `false` once a channel has no older videos
+    cursorByChatId?: Record<string, number | false>;
+    nextChannelIndex?: number;
+  };
   isFetchingDifference?: boolean;
   leftColumnWidth?: number;
   lastIsChatInfoShown?: boolean;

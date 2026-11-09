@@ -3396,6 +3396,11 @@ export interface LangPair {
   'NilakKeepReading': undefined;
   'NilakLongRead': undefined;
   'NilakQuiz': undefined;
+  'NilakReelsEmpty': undefined;
+  'NilakSoundOn': undefined;
+  'NilakSoundOff': undefined;
+  'NilakLike': undefined;
+  'NilakComment': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

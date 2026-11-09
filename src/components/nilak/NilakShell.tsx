@@ -12,6 +12,7 @@ import useLang from '../../hooks/useLang';
 import NilakHome from './NilakHome';
 import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
+import NilakReels from './NilakReels';
 
 import styles from './NilakShell.module.scss';
 
@@ -64,6 +65,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   function renderPage() {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
     if (tab === 'read') return <NilakRead />;
+    if (tab === 'reels') return <NilakReels />;
 
     const title = tab === 'create' ? lang('NilakCreate') : lang(NAV_ITEMS.find((item) => item.tab === tab)!.langKey);
     return (
@@ -81,7 +83,11 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   return (
     <>
       {isBarShown && (
-        <nav className={buildClassName(styles.nav, isNarrow ? styles.bar : styles.rail, isPageOpen && styles.railWide)}>
+        <nav
+          className={buildClassName(
+            styles.nav, isNarrow ? styles.bar : styles.rail, isPageOpen && tab !== 'reels' && styles.railWide,
+          )}
+        >
           {!isNarrow && (
             <div className={styles.logo}>
               <img className={styles.logoImage} src={nilakLogo} alt="" />
@@ -112,8 +118,12 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
         </nav>
       )}
       {isPageOpen && (
-        <div className={buildClassName(styles.page, !isNarrow && styles.pageBesideRail, 'custom-scroll')}>
-          {isNarrow && (
+        <div
+          className={buildClassName(
+            styles.page, !isNarrow && styles.pageBesideRail, tab === 'reels' && styles.pageReels, 'custom-scroll',
+          )}
+        >
+          {isNarrow && tab !== 'reels' && (
             <div className={styles.mobileTop}>
               <img className={styles.logoImage} src={nilakLogo} alt="" />
               <span className={styles.logoText}>Nilak</span>

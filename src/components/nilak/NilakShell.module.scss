@@ -39,6 +39,19 @@
   }
 }
 
+// Reels keep the compact menu, so the black page starts beside it
+.pageReels {
+  overflow: hidden;
+  background: #000;
+
+  @media (min-width: 1100px) {
+    &.pageBesideRail {
+      left: 5.5rem;
+      padding-left: 0;
+    }
+  }
+}
+
 .nav {
   z-index: 4;
   display: flex;

@@ -468,6 +468,9 @@ export interface ActionPayloads {
   loadNilakFeed: {
     shouldRefresh?: true;
   } | undefined;
+  loadNilakReels: {
+    isMore?: true;
+  } | undefined;
   loadRecommendedChatFolders: undefined;
   editChatFolder: {
     id: number;

@@ -18,6 +18,10 @@ const SUGGESTED_CHANNELS_LIMIT = 10;
 const POSTS_PER_CHANNEL = 8;
 // Channels are fetched a few at a time so a long channel list does not hit the server's flood limit
 const FETCH_BATCH_SIZE = 5;
+// Reels follow Nilak for Android: up to 3 minutes, vertical or square, a few channels per round
+const REEL_MAX_DURATION = 180;
+const REELS_PER_CHANNEL = 10;
+const REELS_CHANNELS_PER_ROUND = 10;
 
 addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void> => {
   const { shouldRefresh } = payload || {};
@@ -39,6 +43,67 @@ addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void
   global = updateNilakFeed(global, { isLoading: false, followingPosts, suggestedPosts });
   setGlobal(global);
 });
+
+addActionHandler('loadNilakReels', async (global, actions, payload): Promise<void> => {
+  const { isMore } = payload || {};
+  const reels = global.nilakReels;
+  if (reels?.isLoading || (reels?.posts && !isMore)) return;
+
+  global = updateNilakReels(global, { isLoading: true });
+  setGlobal(global);
+
+  const suggestedChannels = await loadSuggestedChannels();
+  global = getGlobal();
+  const cursorByChatId = { ...global.nilakReels?.cursorByChatId };
+  const channels = selectFollowingChannels(global).concat(suggestedChannels)
+    .filter((chat) => cursorByChatId[chat.id] !== false);
+
+  // Each round asks the next few channels in turn, so every channel gets its share as the user scrolls
+  const start = channels.length ? (global.nilakReels?.nextChannelIndex || 0) % channels.length : 0;
+  const round = channels.slice(start, start + REELS_CHANNELS_PER_ROUND)
+    .concat(channels.slice(0, Math.max(0, start + REELS_CHANNELS_PER_ROUND - channels.length)));
+
+  const seenVideoIds = new Set((global.nilakReels?.posts || []).map((post) => post.content.video!.id));
+  const batch: ApiMessage[] = [];
+
+  for (let i = 0; i < round.length; i += FETCH_BATCH_SIZE) {
+    const chats = round.slice(i, i + FETCH_BATCH_SIZE);
+    const results = await Promise.all(chats.map((chat) => callApi('searchMessagesInChat', {
+      peer: chat, type: 'media', limit: REELS_PER_CHANNEL, offsetId: cursorByChatId[chat.id] || undefined,
+    })));
+
+    global = getGlobal();
+    results.forEach((result, index) => {
+      const chat = chats[index];
+      if (!result) return;
+
+      cursorByChatId[chat.id] = result.nextOffsetId || false;
+      const reelPosts = result.messages
+        .filter((message) => getIsReel(message) && !seenVideoIds.has(message.content.video!.id));
+      reelPosts.forEach((post) => seenVideoIds.add(post.content.video!.id));
+      global = addChatMessagesById(global, chat.id, buildCollectionByKey(result.messages, 'id'));
+      batch.push(...reelPosts);
+    });
+    setGlobal(global);
+  }
+
+  global = getGlobal();
+  global = updateNilakReels(global, {
+    isLoading: false,
+    posts: (global.nilakReels?.posts || []).concat(batch.sort((a, b) => b.date - a.date)),
+    cursorByChatId,
+    nextChannelIndex: start + round.length,
+  });
+  setGlobal(global);
+});
+
+function getIsReel(message: ApiMessage) {
+  const video = message.content.video;
+  if (!video || video.isRound || video.isGif || video.isSpoiler) return false;
+
+  const isVerticalOrSquare = Boolean(video.width && video.height && video.height >= video.width);
+  return isVerticalOrSquare && video.duration <= REEL_MAX_DURATION;
+}
 
 async function loadSuggestedChannels() {
   let global = getGlobal();
@@ -126,6 +191,18 @@ function updateNilakFeed<T extends GlobalState>(global: T, update: Partial<NonNu
     ...global,
     nilakFeed: {
       ...global.nilakFeed,
+      ...update,
+    },
+  };
+}
+
+function updateNilakReels<T extends GlobalState>(
+  global: T, update: Partial<NonNullable<GlobalState['nilakReels']>>,
+): T {
+  return {
+    ...global,
+    nilakReels: {
+      ...global.nilakReels,
       ...update,
     },
   };

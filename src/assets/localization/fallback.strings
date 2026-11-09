@@ -4538,3 +4538,8 @@
 "NilakKeepReading" = "Keep reading";
 "NilakLongRead" = "LONG READ";
 "NilakQuiz" = "Quiz";
+"NilakReelsEmpty" = "No reels yet. Videos from the channels you follow show up here.";
+"NilakSoundOn" = "Turn sound on";
+"NilakSoundOff" = "Turn sound off";
+"NilakLike" = "Like";
+"NilakComment" = "Comments";

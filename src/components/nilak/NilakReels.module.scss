@@ -1,0 +1,270 @@
+.root {
+  position: relative;
+  height: 100%;
+  background: #000;
+}
+
+.tabs {
+  position: absolute;
+  z-index: 2;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: flex;
+  gap: 1.25rem;
+}
+
+.tab {
+  cursor: pointer;
+
+  padding: 0.25rem 0;
+  border: none;
+  border-bottom: 0.125rem solid transparent;
+
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.5);
+
+  background: none;
+}
+
+.tabActive {
+  border-bottom-color: #fff;
+  color: #fff;
+}
+
+.scroll {
+  scrollbar-width: none;
+  scroll-snap-type: y mandatory;
+  overflow-y: auto;
+  height: 100%;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.slot {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  height: 100%;
+}
+
+.status {
+  display: grid;
+  place-items: center;
+
+  padding: 2rem;
+
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+// One reel: the video fills the height, a phone-shaped frame on wide screens
+.reel {
+  position: relative;
+
+  overflow: hidden;
+
+  max-width: calc(100vh * 9 / 16);
+  height: 100%;
+  margin: 0 auto;
+
+  background: #000;
+
+  @media (max-width: 600px) {
+    max-width: none;
+  }
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.2);
+
+  width: 100%;
+  height: 100%;
+
+  opacity: 0.5;
+  object-fit: cover;
+  filter: blur(1.5rem);
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
+.sound {
+  cursor: pointer;
+
+  position: absolute;
+  z-index: 1;
+  top: 3.25rem;
+  right: 0.75rem;
+
+  display: grid;
+  place-items: center;
+
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+
+  font-size: 1.25rem;
+  color: #fff;
+
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.overlay {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  padding: 3rem 4.5rem 1.5rem 1rem;
+
+  color: #fff;
+
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+
+  :global(.nilak-bar-visible) & {
+    padding-bottom: 6.5rem;
+  }
+}
+
+.channel {
+  display: flex;
+  gap: 0.625rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.channelName {
+  cursor: pointer;
+
+  overflow: hidden;
+
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.follow {
+  cursor: pointer;
+
+  flex: none;
+
+  padding: 0.25rem 0.875rem;
+  border: 0.125rem solid #fff;
+  border-radius: 62.4375rem;
+
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  color: #fff;
+
+  background: transparent;
+}
+
+.caption {
+  cursor: pointer;
+
+  overflow-y: auto;
+
+  max-height: 40vh;
+
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+
+  a {
+    color: #d6c3ff;
+  }
+}
+
+.captionFolded {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.actions {
+  position: absolute;
+  z-index: 1;
+  right: 0.5rem;
+  bottom: 1.5rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  :global(.nilak-bar-visible) & {
+    bottom: 6.5rem;
+  }
+}
+
+.action {
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50%;
+
+  font-size: 1.75rem;
+  color: #fff;
+
+  background: none;
+  filter: drop-shadow(0 0.0625rem 0.25rem rgba(0, 0, 0, 0.5));
+}
+
+.hearted {
+  color: #ff4d6d;
+}
+
+.count {
+  min-height: 1rem;
+  margin-bottom: 0.75rem;
+
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold);
+  color: #fff;
+  text-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.5);
+}
+
+.progress {
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  height: 0.125rem;
+
+  background: rgba(255, 255, 255, 0.25);
+
+  :global(.nilak-bar-visible) & {
+    display: none;
+  }
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85);
+}
