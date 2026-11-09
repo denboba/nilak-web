@@ -3376,6 +3376,21 @@ export interface LangPair {
   'SettingsKeywordsLastSeen': undefined;
   'SettingsKeywordsLogOut': undefined;
   'SettingsSearchEmpty': undefined;
+  'NilakHome': undefined;
+  'NilakReels': undefined;
+  'NilakRead': undefined;
+  'NilakProfile': undefined;
+  'NilakCreate': undefined;
+  'NilakForYou': undefined;
+  'NilakFollowing': undefined;
+  'NilakFollow': undefined;
+  'NilakSuggested': undefined;
+  'NilakSuggestedTitle': undefined;
+  'NilakFeedEmpty': undefined;
+  'NilakFeedLoading': undefined;
+  'NilakSoonText': undefined;
+  'NilakGetAndroid': undefined;
+  'NilakApiNote': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5629,6 +5644,9 @@ export interface LangPairWithVariables<V = LangVariable> {
   'PeerPickerUnknownPeer': {
     'id': V;
   };
+  'NilakSoonTitle': {
+    'tab': V;
+  };
 }
 
 export interface LangPairPlural {
@@ -6366,6 +6384,12 @@ export interface LangPairPluralWithVariables<V = LangVariable> {
     'count': V;
   };
   'PageTitleNotifications': {
+    'count': V;
+  };
+  'NilakFollowers': {
+    'count': V;
+  };
+  'NilakComments': {
     'count': V;
   };
 }
@@ -7861,6 +7885,11 @@ export interface LangKeyGroups {
       | 'PeerPickerUnknownPeer';
     variables: 'id';
   };
+  'tab': {
+    keys:
+      | 'NilakSoonTitle';
+    variables: 'tab';
+  };
 }
 
 export interface LangPluralKeyGroups {
@@ -8043,7 +8072,9 @@ export interface LangPluralKeyGroups {
       | 'Views'
       | 'Voice'
       | 'SeenByUsers'
-      | 'PageTitleNotifications';
+      | 'PageTitleNotifications'
+      | 'NilakFollowers'
+      | 'NilakComments';
     variables: 'count';
   };
   'index': {

@@ -9,6 +9,9 @@ import type {
 export const APP_CODE_NAME = 'A';
 export const APP_ENV = import.meta.env.TG_APP_ENV;
 export const APP_NAME = import.meta.env.TG_APP_NAME || `Nilak Web ${APP_CODE_NAME}`;
+// Nilak: Home, Reels, Read and Profile tabs around the chats; `false` restores the plain chat app
+export const IS_NILAK_SHELL = true;
+export const NILAK_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.nilak.app';
 
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
 export const PRODUCTION_URL = 'https://web.telegram.org/a';

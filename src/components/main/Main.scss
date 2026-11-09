@@ -31,6 +31,35 @@
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: 100%;
+
+    // Nilak: the tab menu is the first column
+    &.nilak-rail-visible {
+      grid-template-columns: auto auto 1fr;
+    }
+
+    &.nilak-rail-visible.folders-sidebar-visible {
+      grid-template-columns: auto auto auto 1fr;
+    }
+  }
+}
+
+// Nilak: a Home, Reels, Read or Profile page covers the chat columns
+#Main.nilak-page-open {
+  #FoldersSidebar,
+  #LeftColumn,
+  #MiddleColumn {
+    visibility: hidden;
+  }
+}
+
+// Nilak: room for the floating tab bar under the chat list
+#Main.nilak-bar-visible {
+  #LeftColumn .chat-list {
+    padding-bottom: 5.5rem;
+  }
+
+  .NewChatButton {
+    bottom: 6rem;
   }
 }
 

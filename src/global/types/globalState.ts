@@ -117,6 +117,12 @@ export type GlobalState = {
   isAppConfigLoaded?: boolean;
   isAppUpdateAvailable?: boolean;
   isSynced?: boolean;
+  // Nilak: Home feed posts, kept in memory only
+  nilakFeed?: {
+    isLoading?: boolean;
+    followingPosts?: ApiMessage[];
+    suggestedPosts?: ApiMessage[];
+  };
   isFetchingDifference?: boolean;
   leftColumnWidth?: number;
   lastIsChatInfoShown?: boolean;

@@ -22,6 +22,7 @@ import './api/tonConnect';
 import './api/reactions';
 import './api/statistics';
 import './api/stories';
+import './api/nilak';
 import './ui/initial';
 import './ui/animations';
 import './ui/chats';

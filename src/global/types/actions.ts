@@ -465,6 +465,9 @@ export interface ActionPayloads {
   markChatRead: { id: string };
   markChatMessagesRead: { id: string };
   loadChatFolders: undefined;
+  loadNilakFeed: {
+    shouldRefresh?: true;
+  } | undefined;
   loadRecommendedChatFolders: undefined;
   editChatFolder: {
     id: number;

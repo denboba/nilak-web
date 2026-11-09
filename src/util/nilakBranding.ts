@@ -4,6 +4,7 @@
 const PROTECTED_KEYS = new Set([
   'SentAppCode',
   'TelegramFeaturesUsername',
+  'NilakApiNote',
 ]);
 const PROTECTED_KEY_PREFIXES = ['SponsoredMessageInfo', 'AboutPremium', 'PremiumPreview', 'ChannelEarn'];
 const OVERRIDES: Record<string, string> = {

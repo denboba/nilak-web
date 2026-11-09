@@ -11,7 +11,7 @@ import { getActions, getGlobal, withGlobal } from '../../global';
 import type { ApiChatFolder, ApiLimitTypeWithModal, ApiStarGiftAuctionState, ApiUser } from '../../api/types';
 import type { TabState } from '../../global/types';
 
-import { BASE_EMOJI_KEYWORD_LANG, DEBUG, FOLDERS_POSITION_LEFT } from '../../config';
+import { BASE_EMOJI_KEYWORD_LANG, DEBUG, FOLDERS_POSITION_LEFT, IS_NILAK_SHELL } from '../../config';
 import { requestNextMutation } from '../../lib/fasterdom/fasterdom';
 import {
   selectAreFoldersPresent,
@@ -42,11 +42,13 @@ import { parseInitialLocationHash, parseLocationHash } from '../../util/routing'
 import updateIcon from '../../util/updateIcon';
 import { REM } from '../common/helpers/mediaDimensions';
 import { updateTopReserveWithScrollCompensation } from '../middle/helpers/messageListReserves';
+import { getNilakTab, setNilakTab } from '../nilak/helpers/nilakTab';
 
 import useInterval from '../../hooks/schedulers/useInterval';
 import useTimeout from '../../hooks/schedulers/useTimeout';
 import useTauriEvent from '../../hooks/tauri/useTauriEvent';
 import useAppLayout from '../../hooks/useAppLayout';
+import useDerivedState from '../../hooks/useDerivedState';
 import useForceUpdate from '../../hooks/useForceUpdate';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -75,6 +77,7 @@ import MiddleColumn from '../middle/MiddleColumn';
 import AudioPlayer from '../middle/panes/AudioPlayer';
 import FloatingRoundVideo from '../middle/panes/FloatingRoundVideo';
 import ModalContainer from '../modals/ModalContainer';
+import NilakShell from '../nilak/NilakShell';
 import PaymentModal from '../payment/PaymentModal.async';
 import ReceiptModal from '../payment/ReceiptModal.async';
 import RightColumn from '../right/RightColumn';
@@ -297,6 +300,13 @@ const Main = ({
   const leftColumnRef = useRef<HTMLDivElement>();
 
   const { isDesktop } = useAppLayout();
+
+  const nilakTab = useDerivedState(getNilakTab);
+
+  // Nilak: opening a chat from anywhere (a link, a notification, a feed post) shows the Chats tab
+  useEffect(() => {
+    if (IS_NILAK_SHELL && isMiddleColumnOpen) setNilakTab('chats');
+  }, [isMiddleColumnOpen]);
   useEffect(() => {
     if (!isLeftColumnOpen && !isMiddleColumnOpen && !isDesktop) {
       // Always display at least one column
@@ -573,6 +583,8 @@ const Main = ({
     shouldSkipHistoryAnimations && 'history-animation-disabled',
     isFullscreen && 'is-fullscreen',
     isFoldersSidebarShown && 'folders-sidebar-visible',
+    IS_NILAK_SHELL && (isDesktop ? 'nilak-rail-visible' : 'nilak-bar-visible'),
+    IS_NILAK_SHELL && nilakTab !== 'chats' && 'nilak-page-open',
   );
 
   const handleBlur = useLastCallback(() => {
@@ -632,6 +644,7 @@ const Main = ({
       {IS_TAURI && IS_MAC_OS && (
         <div className="tauri-drag-region" data-tauri-drag-region />
       )}
+      {IS_NILAK_SHELL && <NilakShell isNarrow={!isDesktop} isChatOpen={isMiddleColumnOpen} />}
       <FoldersSidebar isMobile={isMobile} isActive={isFoldersSidebarShown} />
       <LeftColumn ref={leftColumnRef} isFoldersSidebarShown={isFoldersSidebarShown} />
       <MiddleColumn
