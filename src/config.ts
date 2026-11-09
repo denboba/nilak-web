@@ -426,7 +426,8 @@ export const BOT_VERIFICATION_PEERS_LIMIT = 20;
 export const CALL_PROTOCOL_LIBRARY_VERSIONS = ['13.0.0'];
 
 export const LIGHT_THEME_BG_COLOR = '#C9B6EE';
-export const DARK_THEME_BG_COLOR = '#000000';
+// Nilak: deep lilac night, a shade darker than the dark panels
+export const DARK_THEME_BG_COLOR = '#140E1F';
 export const PEER_COLOR_BG_OPACITY = '1a';
 export const PEER_COLOR_BG_ACTIVE_OPACITY = '2b';
 export const PEER_COLOR_GRADIENT_STEP = 5; // px
