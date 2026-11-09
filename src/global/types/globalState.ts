@@ -126,6 +126,7 @@ export type GlobalState = {
   // Nilak: the own profile, posts from the personal channel and media from Saved Messages, kept in memory only
   nilakProfile?: {
     isLoading?: boolean;
+    shouldReload?: boolean;
     channelId?: string;
     posts?: ApiMessage[];
     postsCount?: number;

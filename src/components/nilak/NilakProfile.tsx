@@ -33,7 +33,7 @@ type OwnProps = {
 type StateProps = {
   user?: ApiUser;
   bio?: string;
-  personalChannelId?: string;
+  hasFullInfo: boolean;
   channel?: ApiChat;
   chatsById: Record<string, ApiChat>;
   activeChatIds?: string[];
@@ -54,7 +54,7 @@ const PROFILE_TABS: { tab: ProfileTab; langKey: 'NilakPosts' | 'NilakReels' | 'N
 
 // The own profile, like in Nilak for Android: the personal channel is where a person's posts live
 const NilakProfile = ({
-  isNarrow, user, bio, personalChannelId, channel, chatsById, activeChatIds, archivedChatIds,
+  isNarrow, user, bio, hasFullInfo, channel, chatsById, activeChatIds, archivedChatIds,
   isLoading, posts, postsCount, saved,
 }: OwnProps & StateProps) => {
   const {
@@ -68,9 +68,10 @@ const NilakProfile = ({
     if (userId) loadFullUser({ userId });
   }, [userId]);
 
+  // Loads on each visit, and again once the full profile names the personal channel
   useEffect(() => {
     loadNilakProfile();
-  }, [personalChannelId]);
+  }, [hasFullInfo]);
 
   const followingCount = useMemo(() => (
     (activeChatIds || []).concat(archivedChatIds || []).filter((id) => {
@@ -182,14 +183,13 @@ export default memo(withGlobal<OwnProps>(
     const { currentUserId } = global;
     const user = currentUserId ? selectUser(global, currentUserId) : undefined;
     const fullInfo = currentUserId ? selectUserFullInfo(global, currentUserId) : undefined;
-    const personalChannelId = fullInfo?.personalChannelId;
     const profile = global.nilakProfile;
 
     return {
       user,
       bio: fullInfo?.bio,
-      personalChannelId,
-      channel: personalChannelId ? selectChat(global, personalChannelId) : undefined,
+      hasFullInfo: Boolean(fullInfo),
+      channel: profile?.channelId ? selectChat(global, profile.channelId) : undefined,
       chatsById: global.chats.byId,
       activeChatIds: global.chats.listIds.active,
       archivedChatIds: global.chats.listIds.archived,
