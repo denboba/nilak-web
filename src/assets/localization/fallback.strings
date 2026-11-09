@@ -4543,3 +4543,12 @@
 "NilakSoundOff" = "Turn sound off";
 "NilakLike" = "Like";
 "NilakComment" = "Comments";
+"NilakPosts" = "Posts";
+"NilakSaved" = "Saved";
+"NilakFollowersTitle" = "Followers";
+"NilakSavedEmpty" = "Photos and videos you save show up here.";
+"NilakProfileNoPosts" = "No posts yet.";
+"NilakProfileNoChannel" = "Your posts live in your personal channel. Create a channel and add it to your profile in Settings to see your posts here.";
+"NilakProfileChannel" = "Posts from {title}";
+"NilakEditProfile" = "Edit profile";
+"NilakShareProfile" = "Share profile";

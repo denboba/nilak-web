@@ -123,6 +123,14 @@ export type GlobalState = {
     followingPosts?: ApiMessage[];
     suggestedPosts?: ApiMessage[];
   };
+  // Nilak: the own profile, posts from the personal channel and media from Saved Messages, kept in memory only
+  nilakProfile?: {
+    isLoading?: boolean;
+    channelId?: string;
+    posts?: ApiMessage[];
+    postsCount?: number;
+    saved?: ApiMessage[];
+  };
   // Nilak: Reels, short vertical videos from followed and suggested channels, kept in memory only
   nilakReels?: {
     isLoading?: boolean;

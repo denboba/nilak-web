@@ -3401,6 +3401,14 @@ export interface LangPair {
   'NilakSoundOff': undefined;
   'NilakLike': undefined;
   'NilakComment': undefined;
+  'NilakPosts': undefined;
+  'NilakSaved': undefined;
+  'NilakFollowersTitle': undefined;
+  'NilakSavedEmpty': undefined;
+  'NilakProfileNoPosts': undefined;
+  'NilakProfileNoChannel': undefined;
+  'NilakEditProfile': undefined;
+  'NilakShareProfile': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5657,6 +5665,9 @@ export interface LangPairWithVariables<V = LangVariable> {
   'NilakSoonTitle': {
     'tab': V;
   };
+  'NilakProfileChannel': {
+    'title': V;
+  };
 }
 
 export interface LangPairPlural {
@@ -7225,7 +7236,8 @@ export interface LangKeyGroups {
       | 'ActionChangedTitleYou'
       | 'ActionChangedTitleChannel'
       | 'ActionCreatedChatYou'
-      | 'AiToneCreated';
+      | 'AiToneCreated'
+      | 'NilakProfileChannel';
     variables: 'title';
   };
   'from,text': {

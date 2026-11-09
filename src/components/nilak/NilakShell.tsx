@@ -10,6 +10,7 @@ import useDerivedState from '../../hooks/useDerivedState';
 import useLang from '../../hooks/useLang';
 
 import NilakHome from './NilakHome';
+import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
 import NilakReels from './NilakReels';
@@ -66,6 +67,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
     if (tab === 'read') return <NilakRead />;
     if (tab === 'reels') return <NilakReels />;
+    if (tab === 'profile') return <NilakProfile isNarrow={isNarrow} />;
 
     const title = tab === 'create' ? lang('NilakCreate') : lang(NAV_ITEMS.find((item) => item.tab === tab)!.langKey);
     return (

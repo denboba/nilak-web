@@ -10,7 +10,9 @@ import { addActionHandler, getGlobal, setGlobal } from '../../index';
 import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
-import { selectChat, selectChatLastMessage, selectSimilarChannelIds } from '../../selectors';
+import {
+  selectChat, selectChatLastMessage, selectSimilarChannelIds, selectUser, selectUserFullInfo,
+} from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
 const SUGGESTED_CHANNELS_LIMIT = 10;
@@ -22,6 +24,7 @@ const FETCH_BATCH_SIZE = 5;
 const REEL_MAX_DURATION = 180;
 const REELS_PER_CHANNEL = 10;
 const REELS_CHANNELS_PER_ROUND = 10;
+const PROFILE_POSTS_LIMIT = 60;
 
 addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void> => {
   const { shouldRefresh } = payload || {};
@@ -93,6 +96,43 @@ addActionHandler('loadNilakReels', async (global, actions, payload): Promise<voi
     posts: (global.nilakReels?.posts || []).concat(batch.sort((a, b) => b.date - a.date)),
     cursorByChatId,
     nextChannelIndex: start + round.length,
+  });
+  setGlobal(global);
+});
+
+addActionHandler('loadNilakProfile', async (global): Promise<void> => {
+  const { currentUserId } = global;
+  if (!currentUserId || global.nilakProfile?.isLoading) return;
+
+  global = updateNilakProfile(global, { isLoading: true });
+  setGlobal(global);
+
+  const channelId = selectUserFullInfo(global, currentUserId)?.personalChannelId;
+  const channel = channelId ? selectChat(global, channelId) : undefined;
+  const self = selectUser(global, currentUserId)!;
+
+  const [postsResult, savedResult] = await Promise.all([
+    channel
+      ? callApi('fetchMessages', { chat: channel, threadId: MAIN_THREAD_ID, limit: PROFILE_POSTS_LIMIT })
+      : undefined,
+    callApi('searchMessagesInChat', { peer: self, type: 'media', limit: PROFILE_POSTS_LIMIT }),
+  ]);
+
+  global = getGlobal();
+  if (postsResult && channel) {
+    global = addUsers(global, buildCollectionByKey(postsResult.users, 'id'));
+    global = addChats(global, buildCollectionByKey(postsResult.chats, 'id'));
+    global = addChatMessagesById(global, channel.id, buildCollectionByKey(postsResult.messages, 'id'));
+  }
+  if (savedResult) {
+    global = addChatMessagesById(global, currentUserId, buildCollectionByKey(savedResult.messages, 'id'));
+  }
+  global = updateNilakProfile(global, {
+    isLoading: false,
+    channelId: channel?.id,
+    posts: postsResult ? pickPosts(postsResult.messages) : [],
+    postsCount: postsResult?.count,
+    saved: savedResult?.messages,
   });
   setGlobal(global);
 });
@@ -203,6 +243,18 @@ function updateNilakReels<T extends GlobalState>(
     ...global,
     nilakReels: {
       ...global.nilakReels,
+      ...update,
+    },
+  };
+}
+
+function updateNilakProfile<T extends GlobalState>(
+  global: T, update: Partial<NonNullable<GlobalState['nilakProfile']>>,
+): T {
+  return {
+    ...global,
+    nilakProfile: {
+      ...global.nilakProfile,
       ...update,
     },
   };
