@@ -115,8 +115,8 @@
     --color-primary-opacity: rgba(var(--color-primary), 0.2);
     --color-primary-opacity-hover: rgba(var(--color-primary), 0.25);
     --color-primary-tint: rgba(var(--color-primary), 0.1);
-    --color-active: #{$color-green};
-    --color-active-darker: #{color.mix($color-green, $color-black, 84%)};
+    --color-active: #{$color-primary};
+    --color-active-darker: #{color.mix($color-primary, $color-black, 84%)};
     --color-success: #{$color-green};
 
     --accent-color: var(--color-primary);
