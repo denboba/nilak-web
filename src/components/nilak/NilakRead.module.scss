@@ -83,6 +83,10 @@
   background: linear-gradient(160deg, #7138d5, #c9a2f2);
 }
 
+.coverAvatar {
+  box-shadow: 0 0 0 0.1875rem rgba(255, 255, 255, 0.85);
+}
+
 .info {
   display: flex;
   grid-area: info;

@@ -52,7 +52,9 @@ const NilakReadCard = ({
           <span className={styles.channelName}>{chat.title}</span>
         </div>
       )}
-      <div className={styles.cover}>✿</div>
+      <div className={styles.cover}>
+        {isBarruu || !chat ? '✿' : <Avatar className={styles.coverAvatar} peer={chat} size="large" />}
+      </div>
       <div className={styles.info}>
         <span className={styles.tag}>
           {isBarruu ? '✿ BARRUU' : lang('NilakLongRead')}

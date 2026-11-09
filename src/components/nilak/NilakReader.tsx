@@ -17,6 +17,7 @@ import renderText from '../common/helpers/renderText';
 import { renderTextWithEntities } from '../common/helpers/renderTextWithEntities';
 import {
   getBarruuSubtitle, getBarruuTitle, getIsBarruu, getReadMinutes, parseBarruu, parseBarruuInline, readBarruuPackage,
+  splitLongPost,
 } from './helpers/barruu';
 import { setOpenedRead } from './helpers/nilakTab';
 import { getReadingProgress, saveReadingProgress } from './helpers/readingProgress';
@@ -248,9 +249,10 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
     if (!message) return undefined;
 
     if (!isBarruu) {
-      const text = message.content.text;
-      return text && (
-        <p className={styles.paragraph}>{renderTextWithEntities({ text: text.text, entities: text.entities })}</p>
+      return longPost && (
+        <p className={styles.paragraph}>
+          {renderTextWithEntities({ text: longPost.body.text, entities: longPost.body.entities })}
+        </p>
       );
     }
 
@@ -262,6 +264,9 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
 
   const minutes = message ? getReadMinutes(message) : 0;
   const subtitle = message && isBarruu ? getBarruuSubtitle(message) : undefined;
+  const longPost = useMemo(() => (
+    message?.content.text && !isBarruu ? splitLongPost(message.content.text) : undefined
+  ), [message?.content.text, isBarruu]);
 
   return (
     <div className={styles.root} role="dialog" aria-modal>
@@ -285,6 +290,12 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
               <span className={styles.tag}>✿ BARRUU</span>
               <h1 className={styles.title}>{renderText(getBarruuTitle(message))}</h1>
               {subtitle && <p className={styles.subtitle}>{renderText(subtitle, ['emoji', 'br'])}</p>}
+            </>
+          )}
+          {longPost?.title && (
+            <>
+              <span className={styles.tag}>{lang('NilakLongRead')}</span>
+              <h1 className={styles.title}>{renderText(longPost.title)}</h1>
             </>
           )}
           {renderBody()}

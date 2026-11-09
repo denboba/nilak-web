@@ -14,7 +14,8 @@ import { selectChat, selectChatLastMessage, selectSimilarChannelIds } from '../.
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
 const SUGGESTED_CHANNELS_LIMIT = 10;
-const POSTS_PER_CHANNEL = 3;
+// Enough recent posts per channel to also fill Read with long posts and Barruu
+const POSTS_PER_CHANNEL = 8;
 // Channels are fetched a few at a time so a long channel list does not hit the server's flood limit
 const FETCH_BATCH_SIZE = 5;
 

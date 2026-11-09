@@ -1,6 +1,6 @@
 import { strFromU8, unzipSync } from 'fflate';
 
-import type { ApiMessage } from '../../../api/types';
+import type { ApiFormattedText, ApiMessage } from '../../../api/types';
 
 // A Barruu is the Nilak article format shared with Nilak for Android (`TigiArticle.java`): a zip named
 // `<slug>.nilak` holding `manifest.json`, `article.md` in Nilak Markdown and a `media/` folder. The caption carries
@@ -13,6 +13,8 @@ const READ_TAG = '#NilakRead';
 // Long text posts are listed in Read too, like in Nilak for Android
 const LONG_POST_LENGTH = 900;
 const WORDS_PER_MINUTE = 200;
+// A first line up to this length reads as the title of a long post
+const MAX_TITLE_LENGTH = 200;
 const MEDIA_TYPES: Record<string, string> = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
@@ -91,6 +93,27 @@ export function getReadMinutes(message: ApiMessage) {
   }
 
   return Math.max(1, Math.round(text.split(/\s+/).length / WORDS_PER_MINUTE));
+}
+
+// A long post's first line becomes its title in the reader; entities move with the rest of the text
+export function splitLongPost(text: ApiFormattedText): { title?: string; body: ApiFormattedText } {
+  const newLineIndex = text.text.indexOf('\n');
+  const title = newLineIndex > 0 ? text.text.slice(0, newLineIndex).trim() : '';
+  if (!title || title.length > MAX_TITLE_LENGTH) return { body: text };
+
+  const rest = text.text.slice(newLineIndex + 1);
+  const body = rest.trimStart();
+  const cut = text.text.length - body.length;
+
+  return {
+    title,
+    body: {
+      text: body,
+      entities: text.entities
+        ?.filter((entity) => entity.offset >= cut)
+        .map((entity) => ({ ...entity, offset: entity.offset - cut })),
+    },
+  };
 }
 
 export function readBarruuPackage(data: ArrayBuffer): BarruuPackage {
