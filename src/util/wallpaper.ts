@@ -56,14 +56,16 @@ export const RESET_WALLPAPER_SETTINGS: Partial<IThemeSettings> = {
 // Negative intensity => the pattern masks the gradient (doodles reveal the animated gradient over
 // a dark base), matching Telegram's dark-wallpaper convention.
 export const DEFAULT_DARK_WALLPAPER: DefaultWallpaper = {
-  colors: ['#4f5bd5', '#962fbf', '#dd6cb9', '#fec496'],
-  patternColor: getWallpaperPatternColor('#4f5bd5'),
+  // Nilak lilac night
+  colors: ['#3a2563', '#6a45b8', '#8e5bc9', '#2a1b42'],
+  patternColor: getWallpaperPatternColor('#3a2563'),
   intensity: -DEFAULT_PATTERN_INTENSITY,
 };
 
 export const DEFAULT_LIGHT_WALLPAPER: DefaultWallpaper = {
-  colors: ['#bdcd8c', '#8eba89', '#83b28f', '#c5d3b0'],
-  patternColor: getWallpaperPatternColor('#bdcd8c'),
+  // Nilak lilac: lavender, violet, rose and mint, the same colours as Nilak for Android
+  colors: ['#d9c6f6', '#a888e3', '#ebc9e6', '#bfdcc8'],
+  patternColor: getWallpaperPatternColor('#d9c6f6'),
   intensity: DEFAULT_PATTERN_INTENSITY,
 };
 

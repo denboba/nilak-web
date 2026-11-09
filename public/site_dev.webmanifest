@@ -1,7 +1,7 @@
 {
-    "name": "Telegram Web Beta",
-    "short_name": "Telegram Web Beta",
-    "description": "Telegram is a cloud-based mobile and desktop messaging app with a focus on security and speed.",
+    "name": "Nilak",
+    "short_name": "Nilak",
+    "description": "Nilak: posts, reels, articles and chats in one calm app, on the Telegram network.",
     "start_url": "./",
     "gcm_sender_id": "122867383838",
     "icons": [
@@ -42,7 +42,7 @@
         ]
       }
     },
-    "theme_color": "#ffffff",
+    "theme_color": "#7138D5",
     "background_color": "#ffffff",
     "display": "standalone"
 }

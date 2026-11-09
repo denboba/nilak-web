@@ -34,7 +34,8 @@
   }
 
   #logo {
-    background: url("../../assets/telegram-logo.svg") center no-repeat;
+    // Nilak logo
+    background: url("../../assets/nilak-logo.svg") center no-repeat;
     background-size: 100%;
   }
 
@@ -169,6 +170,24 @@
     transition: opacity 1ms;
   }
 
+  // Nilak: the floret sits in the middle of the QR code in place of the plane
+  .qr-inner::after {
+    pointer-events: none;
+    content: "";
+
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 3.375rem;
+    height: 3.375rem;
+    border-radius: 50%;
+
+    background: url("../../assets/nilak-logo.svg") center / 100% no-repeat;
+  }
+
   .qr-plane {
     position: absolute;
     z-index: 1;
@@ -178,6 +197,7 @@
 
     border-radius: 50%;
 
+    visibility: hidden;
     background-color: var(--color-telegram-blue);
   }
 

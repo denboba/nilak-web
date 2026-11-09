@@ -35,6 +35,7 @@ import { createCallbackManager } from '../callbacks';
 import readFallbackStrings from '../data/readFallbackStrings';
 import { initialEstablishmentPromise, isCurrentTabMaster } from '../establishMultitabRole';
 import { mapValues, omit, unique } from '../iteratees';
+import { brandString } from '../nilakBranding';
 import { replaceInStringsWithTeact } from '../replaceWithTeact';
 import { fastRaf } from '../schedulers';
 import { resetDateFormatCache } from './dateFormat';
@@ -505,7 +506,8 @@ function getString(langKey: LangKey, count: number) {
     ? (langPackStringValue[pluralSuffix] ?? langPackStringValue.other)
     : langPackStringValue;
 
-  return string;
+  // Nilak: app name in place of Telegram's where it names this app
+  return brandString(langKey, string);
 }
 
 function processVariable(value: TeactNode | LangFnParametersShape<LangFnOptions>) {

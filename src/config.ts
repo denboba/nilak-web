@@ -8,7 +8,7 @@ import type {
 
 export const APP_CODE_NAME = 'A';
 export const APP_ENV = import.meta.env.TG_APP_ENV;
-export const APP_NAME = import.meta.env.TG_APP_NAME || `Telegram Web ${APP_CODE_NAME}`;
+export const APP_NAME = import.meta.env.TG_APP_NAME || `Nilak Web ${APP_CODE_NAME}`;
 
 export const PRODUCTION_HOSTNAME = 'web.telegram.org';
 export const PRODUCTION_URL = 'https://web.telegram.org/a';
@@ -425,7 +425,7 @@ export const BOT_VERIFICATION_PEERS_LIMIT = 20;
 
 export const CALL_PROTOCOL_LIBRARY_VERSIONS = ['13.0.0'];
 
-export const LIGHT_THEME_BG_COLOR = '#99BA92';
+export const LIGHT_THEME_BG_COLOR = '#C9B6EE';
 export const DARK_THEME_BG_COLOR = '#000000';
 export const PEER_COLOR_BG_OPACITY = '1a';
 export const PEER_COLOR_BG_ACTIVE_OPACITY = '2b';
