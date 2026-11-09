@@ -11,7 +11,7 @@ import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
 import {
-  selectChat, selectChatLastMessage, selectSimilarChannelIds, selectUser, selectUserFullInfo,
+  selectChat, selectChatLastMessage, selectNilakProfileChannel, selectSimilarChannelIds, selectUser,
 } from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
@@ -147,17 +147,6 @@ addActionHandler('loadNilakProfile', async (global, actions): Promise<void> => {
 
   if (shouldReload) actions.loadNilakProfile();
 });
-
-// The personal channel set on the profile, else the first channel the user created, like Nilak for Android
-function selectNilakProfileChannel(global: GlobalState, currentUserId: string) {
-  const personalChannelId = selectUserFullInfo(global, currentUserId)?.personalChannelId;
-  const personalChannel = personalChannelId ? selectChat(global, personalChannelId) : undefined;
-  if (personalChannel) return personalChannel;
-
-  return (global.chats.listIds.active || [])
-    .map((id) => selectChat(global, id))
-    .find((chat) => chat && isChatChannel(chat) && chat.isOwner);
-}
 
 function getIsReel(message: ApiMessage) {
   const video = message.content.video;

@@ -2,13 +2,13 @@ import { memo } from '../../lib/teact/teact';
 
 import type { NilakTab } from './helpers/nilakTab';
 
-import { NILAK_ANDROID_URL } from '../../config';
 import buildClassName from '../../util/buildClassName';
 import { getNilakTab, getOpenedRead, setNilakTab } from './helpers/nilakTab';
 
 import useDerivedState from '../../hooks/useDerivedState';
 import useLang from '../../hooks/useLang';
 
+import NilakCreate from './NilakCreate';
 import NilakHome from './NilakHome';
 import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
@@ -68,18 +68,9 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'read') return <NilakRead />;
     if (tab === 'reels') return <NilakReels />;
     if (tab === 'profile') return <NilakProfile isNarrow={isNarrow} />;
+    if (tab === 'create') return <NilakCreate />;
 
-    const title = tab === 'create' ? lang('NilakCreate') : lang(NAV_ITEMS.find((item) => item.tab === tab)!.langKey);
-    return (
-      <div className={styles.soon}>
-        <img className={styles.soonLogo} src={nilakLogo} alt="" />
-        <h2 className={styles.soonTitle}>{lang('NilakSoonTitle', { tab: title })}</h2>
-        <p className={styles.soonText}>{lang('NilakSoonText')}</p>
-        <a className={styles.soonLink} href={NILAK_ANDROID_URL} target="_blank" rel="noopener noreferrer">
-          {lang('NilakGetAndroid')}
-        </a>
-      </div>
-    );
+    return undefined;
   }
 
   return (

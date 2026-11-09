@@ -1,4 +1,6 @@
-import { strFromU8, unzipSync } from 'fflate';
+import {
+  strFromU8, strToU8, unzipSync, zipSync,
+} from 'fflate';
 
 import type { ApiFormattedText, ApiMessage } from '../../../api/types';
 
@@ -8,6 +10,10 @@ import type { ApiFormattedText, ApiMessage } from '../../../api/types';
 const BARRUU_EXT = '.nilak';
 const BARRUU_MIME = 'application/vnd.nilak.article+zip';
 const BARRUU_BODY = 'article.md';
+const BARRUU_MANIFEST = 'manifest.json';
+const BARRUU_FORMAT = 'nilak-article';
+const BARRUU_VERSION = 1;
+const MAX_SLUG_LENGTH = 60;
 const MINUTES_MARK = '📖';
 const READ_TAG = '#NilakRead';
 // Long text posts are listed in Read too, like in Nilak for Android
@@ -130,6 +136,63 @@ export function readBarruuPackage(data: ArrayBuffer): BarruuPackage {
   });
 
   return { body, mediaUrls };
+}
+
+export type BarruuDraft = {
+  title: string;
+  subtitle: string;
+  author: string;
+  body: string;
+  // Media added in the writer, by its path in the package (`media/…`)
+  media: Record<string, File>;
+};
+
+// Packs a Barruu the way Nilak for Android does, so both apps open what the other writes
+export async function buildBarruuFile(draft: BarruuDraft): Promise<File> {
+  const words = countWords(draft.body);
+  const manifest = {
+    format: BARRUU_FORMAT,
+    version: BARRUU_VERSION,
+    title: draft.title,
+    subtitle: draft.subtitle,
+    author: draft.author,
+    lang: navigator.language,
+    words,
+    minutes: getMinutesForWords(words),
+    created: Date.now(),
+  };
+
+  const files: Record<string, Uint8Array> = {
+    [BARRUU_MANIFEST]: strToU8(JSON.stringify(manifest)),
+    [BARRUU_BODY]: strToU8(draft.body),
+  };
+  const usedMedia = Object.entries(draft.media).filter(([path]) => draft.body.includes(path));
+  const mediaBytes = await Promise.all(usedMedia.map(([, file]) => file.arrayBuffer()));
+  usedMedia.forEach(([path], index) => {
+    files[path] = new Uint8Array(mediaBytes[index]);
+  });
+
+  const zip = zipSync(files);
+  return new File([zip], `${buildSlug(draft.title)}${BARRUU_EXT}`, { type: BARRUU_MIME });
+}
+
+// The caption carries the title, the subtitle and the reading time, so lists show them before the download
+export function buildBarruuCaption(draft: BarruuDraft) {
+  const minutes = getMinutesForWords(countWords(draft.body));
+  return [draft.title, draft.subtitle, `${MINUTES_MARK} ${minutes} min read`].filter(Boolean).join('\n');
+}
+
+function countWords(markdown: string) {
+  return markdown.split(/\s+/).filter(Boolean).length;
+}
+
+function getMinutesForWords(words: number) {
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
+}
+
+function buildSlug(title: string) {
+  const slug = title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, MAX_SLUG_LENGTH);
+  return slug || 'barruu';
 }
 
 export function getIsVideoPath(path: string) {

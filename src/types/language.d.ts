@@ -3388,8 +3388,6 @@ export interface LangPair {
   'NilakSuggestedTitle': undefined;
   'NilakFeedEmpty': undefined;
   'NilakFeedLoading': undefined;
-  'NilakSoonText': undefined;
-  'NilakGetAndroid': undefined;
   'NilakApiNote': undefined;
   'NilakReadEmpty': undefined;
   'NilakReadError': undefined;
@@ -3409,6 +3407,34 @@ export interface LangPair {
   'NilakProfileNoChannel': undefined;
   'NilakEditProfile': undefined;
   'NilakShareProfile': undefined;
+  'NilakCreateTitle': undefined;
+  'NilakCreateNoChannel': undefined;
+  'NilakCreateChannel': undefined;
+  'NilakCreatePost': undefined;
+  'NilakCreatePostHint': undefined;
+  'NilakCreateMedia': undefined;
+  'NilakCreateMediaHint': undefined;
+  'NilakCreatePoll': undefined;
+  'NilakCreatePollHint': undefined;
+  'NilakCreateFile': undefined;
+  'NilakCreateFileHint': undefined;
+  'NilakCreateBarruu': undefined;
+  'NilakCreateBarruuHint': undefined;
+  'NilakWriterTitle': undefined;
+  'NilakWriterSubtitle': undefined;
+  'NilakWriterBody': undefined;
+  'NilakWriterPreview': undefined;
+  'NilakWriterPublish': undefined;
+  'NilakWriterHeading': undefined;
+  'NilakWriterBold': undefined;
+  'NilakWriterItalic': undefined;
+  'NilakWriterQuote': undefined;
+  'NilakWriterList': undefined;
+  'NilakWriterTip': undefined;
+  'NilakWriterQuiz': undefined;
+  'NilakWriterTable': undefined;
+  'NilakWriterDivider': undefined;
+  'NilakWriterPhoto': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5662,10 +5688,10 @@ export interface LangPairWithVariables<V = LangVariable> {
   'PeerPickerUnknownPeer': {
     'id': V;
   };
-  'NilakSoonTitle': {
-    'tab': V;
-  };
   'NilakProfileChannel': {
+    'title': V;
+  };
+  'NilakCreateTo': {
     'title': V;
   };
 }
@@ -7237,7 +7263,8 @@ export interface LangKeyGroups {
       | 'ActionChangedTitleChannel'
       | 'ActionCreatedChatYou'
       | 'AiToneCreated'
-      | 'NilakProfileChannel';
+      | 'NilakProfileChannel'
+      | 'NilakCreateTo';
     variables: 'title';
   };
   'from,text': {
@@ -7909,11 +7936,6 @@ export interface LangKeyGroups {
     keys:
       | 'PeerPickerUnknownPeer';
     variables: 'id';
-  };
-  'tab': {
-    keys:
-      | 'NilakSoonTitle';
-    variables: 'tab';
   };
 }
 
