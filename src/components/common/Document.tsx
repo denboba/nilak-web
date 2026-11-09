@@ -7,6 +7,7 @@ import type { ApiDocument, ApiMessage, MediaContent } from '../../api/types';
 import type { ObserveFn } from '../../hooks/useIntersectionObserver';
 import type { MenuItemContextAction } from '../ui/ListItem';
 
+import { IS_NILAK_SHELL } from '../../config';
 import {
   getDocumentMediaHash,
   getMediaFormat,
@@ -14,6 +15,8 @@ import {
   isDocumentVideo,
 } from '../../global/helpers';
 import { isIpRevealingMedia } from '../../util/media/ipRevealingMedia';
+import { getIsBarruu } from '../nilak/helpers/barruu';
+import { setOpenedRead } from '../nilak/helpers/nilakTab';
 import { getDocumentExtension, getDocumentHasPreview } from './helpers/documentInfo';
 import { preloadDocumentMedia } from './helpers/preloadDocumentMedia';
 
@@ -165,6 +168,12 @@ const Document = ({
 
     if (isTransferring) {
       setIsLoadAllowed(false);
+      return;
+    }
+
+    // Nilak: a Barruu opens in the Nilak reader instead of downloading its zip
+    if (IS_NILAK_SHELL && message && getIsBarruu(message)) {
+      setOpenedRead({ chatId: message.chatId, messageId: message.id });
       return;
     }
 

@@ -4,12 +4,14 @@ import type { NilakTab } from './helpers/nilakTab';
 
 import { NILAK_ANDROID_URL } from '../../config';
 import buildClassName from '../../util/buildClassName';
-import { getNilakTab, setNilakTab } from './helpers/nilakTab';
+import { getNilakTab, getOpenedRead, setNilakTab } from './helpers/nilakTab';
 
 import useDerivedState from '../../hooks/useDerivedState';
 import useLang from '../../hooks/useLang';
 
 import NilakHome from './NilakHome';
+import NilakRead from './NilakRead';
+import NilakReader from './NilakReader';
 
 import styles from './NilakShell.module.scss';
 
@@ -46,6 +48,7 @@ const PLUS_PATH = 'M12 5v14M5 12h14';
 const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
+  const openedRead = useDerivedState(getOpenedRead);
   const isPageOpen = tab !== 'chats';
   // On phones the bar gives way to an open chat, like the tab bar in Nilak for Android
   const isBarShown = !isNarrow || isPageOpen || !isChatOpen;
@@ -60,6 +63,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
 
   function renderPage() {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
+    if (tab === 'read') return <NilakRead />;
 
     const title = tab === 'create' ? lang('NilakCreate') : lang(NAV_ITEMS.find((item) => item.tab === tab)!.langKey);
     return (
@@ -126,6 +130,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
           {renderPage()}
         </div>
       )}
+      {openedRead && <NilakReader chatId={openedRead.chatId} messageId={openedRead.messageId} />}
     </>
   );
 };

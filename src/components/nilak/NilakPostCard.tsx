@@ -13,6 +13,7 @@ import { formatCompactTimestamp, secondsToDate } from '../../util/localization/d
 import { formatIntegerCompact } from '../../util/textFormat';
 import renderText from '../common/helpers/renderText';
 import { renderTextWithEntities } from '../common/helpers/renderTextWithEntities';
+import { getIsBarruu } from './helpers/barruu';
 import { setNilakTab } from './helpers/nilakTab';
 
 import useFlag from '../../hooks/useFlag';
@@ -22,6 +23,7 @@ import useMedia from '../../hooks/useMedia';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import NilakReadCard from './NilakReadCard';
 
 import styles from './NilakPostCard.module.scss';
 
@@ -58,6 +60,7 @@ const NilakPostCard = ({
   const mediaUrl = useMedia(mediaHash);
   const thumbUrl = (photo || video)?.thumbnail?.dataUri;
   const isFoldable = Boolean(text && text.text.length > FOLD_TEXT_LENGTH);
+  const isBarruu = getIsBarruu(message);
 
   const reactions = message.reactions?.results
     .filter((r): r is ApiReactionCount & { reaction: ApiReaction } => r.reaction.type === 'emoji')
@@ -112,7 +115,9 @@ const NilakPostCard = ({
         )}
       </div>
 
-      {text && (
+      {isBarruu && <NilakReadCard post={message} noChannel />}
+
+      {text && !isBarruu && (
         <div
           className={buildClassName(styles.text, isFoldable && !isExpanded && styles.folded)}
           dir="auto"

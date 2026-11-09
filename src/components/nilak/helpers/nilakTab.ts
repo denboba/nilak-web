@@ -4,3 +4,8 @@ export type NilakTab = 'home' | 'reels' | 'read' | 'chats' | 'profile' | 'create
 
 // Nilak opens on Home, like Nilak for Android
 export const [getNilakTab, setNilakTab] = createSignal<NilakTab>('home');
+
+export type NilakReadTarget = { chatId: string; messageId: number };
+
+// The Barruu or long post open in the reader, over any tab
+export const [getOpenedRead, setOpenedRead] = createSignal<NilakReadTarget | undefined>();

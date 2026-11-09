@@ -3391,6 +3391,11 @@ export interface LangPair {
   'NilakSoonText': undefined;
   'NilakGetAndroid': undefined;
   'NilakApiNote': undefined;
+  'NilakReadEmpty': undefined;
+  'NilakReadError': undefined;
+  'NilakKeepReading': undefined;
+  'NilakLongRead': undefined;
+  'NilakQuiz': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -6392,6 +6397,9 @@ export interface LangPairPluralWithVariables<V = LangVariable> {
   'NilakComments': {
     'count': V;
   };
+  'NilakReadMinutes': {
+    'count': V;
+  };
 }
 
 export interface LangKeyGroups {
@@ -8074,7 +8082,8 @@ export interface LangPluralKeyGroups {
       | 'SeenByUsers'
       | 'PageTitleNotifications'
       | 'NilakFollowers'
-      | 'NilakComments';
+      | 'NilakComments'
+      | 'NilakReadMinutes';
     variables: 'count';
   };
   'index': {
