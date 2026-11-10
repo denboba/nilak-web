@@ -18,7 +18,7 @@ type OwnProps = {
   className?: string;
   // Album parts beyond the shown ones, drawn over the last tile as "+N"
   moreCount?: number;
-  onClick: NoneToVoidFunction;
+  onClick?: NoneToVoidFunction;
 };
 
 // A photo, or the first frame of a video, in a post card

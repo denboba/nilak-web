@@ -27,6 +27,7 @@ import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
 import Loading from '../ui/Loading';
 import NilakBarruuBody from './NilakBarruuBody';
+import NilakMediaTile from './NilakMediaTile';
 
 import styles from './NilakReader.module.scss';
 
@@ -121,9 +122,12 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
 
     if (!isBarruu) {
       return longPost && (
-        <p className={styles.paragraph}>
-          {renderTextWithEntities({ text: longPost.body.text, entities: longPost.body.entities })}
-        </p>
+        <>
+          <NilakMediaTile message={message} className={styles.postMedia} />
+          <p className={styles.paragraph}>
+            {renderTextWithEntities({ text: longPost.body.text, entities: longPost.body.entities })}
+          </p>
+        </>
       );
     }
 

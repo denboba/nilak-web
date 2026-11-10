@@ -21,6 +21,9 @@ const LONG_POST_LENGTH = 900;
 const WORDS_PER_MINUTE = 200;
 // A first line up to this length reads as the title of a long post
 const MAX_TITLE_LENGTH = 200;
+// Titles in lists stay short; the first sentence is kept when it is not too short
+const MAX_LIST_TITLE_LENGTH = 110;
+const MIN_SENTENCE_TITLE_LENGTH = 30;
 const MEDIA_TYPES: Record<string, string> = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
@@ -61,7 +64,9 @@ export function getIsBarruu(message: ApiMessage) {
 
 export function getIsReadPost(message: ApiMessage) {
   if (getIsBarruu(message)) return true;
-  if (message.content.photo || message.content.video || message.content.document) return false;
+  // Long posts count with or without a photo or video, like in Nilak for Android; other files do not
+  const { document, video } = message.content;
+  if (document || video?.isRound) return false;
 
   const text = message.content.text?.text || '';
   return text.length >= LONG_POST_LENGTH || text.includes('telegra.ph/') || text.includes(READ_TAG);
@@ -79,7 +84,20 @@ export function getBarruuTitle(message: ApiMessage) {
 
 // The title shown in lists: a Barruu's title, else the first line of a long post
 export function getReadTitle(message: ApiMessage) {
-  return getIsBarruu(message) ? getBarruuTitle(message) : (message.content.text?.text || '').split('\n', 1)[0];
+  if (getIsBarruu(message)) return getBarruuTitle(message);
+
+  return shortenTitle((message.content.text?.text || '').trim().split('\n', 1)[0]);
+}
+
+// A first line that is a whole paragraph is cut at its first sentence, or at a word
+function shortenTitle(line: string) {
+  if (line.length <= MAX_LIST_TITLE_LENGTH) return line;
+
+  const sentenceEnd = line.slice(0, MAX_LIST_TITLE_LENGTH).search(/[.!?:](\s|$)(?![\s\S]*[.!?:](\s|$))/);
+  if (sentenceEnd >= MIN_SENTENCE_TITLE_LENGTH) return line.slice(0, sentenceEnd + 1);
+
+  const wordEnd = line.lastIndexOf(' ', MAX_LIST_TITLE_LENGTH);
+  return `${line.slice(0, wordEnd > 0 ? wordEnd : MAX_LIST_TITLE_LENGTH)}…`;
 }
 
 export function getBarruuSubtitle(message: ApiMessage) {

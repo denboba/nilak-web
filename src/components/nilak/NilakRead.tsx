@@ -59,23 +59,27 @@ const NilakRead = ({ isLoading, followingPosts, suggestedPosts }: StateProps) =>
       {Boolean(unfinished.length) && (
         <>
           <h2 className={styles.sectionTitle}>{lang('NilakKeepReading')}</h2>
-          {unfinished.map((post) => (
-            <NilakReadCard
-              key={`keep-${post.chatId}-${post.id}`}
-              post={post}
-              progress={progressByKey?.[`${post.chatId}:${post.id}`]}
-            />
-          ))}
+          <div className={styles.grid}>
+            {unfinished.map((post) => (
+              <NilakReadCard
+                key={`keep-${post.chatId}-${post.id}`}
+                post={post}
+                progress={progressByKey?.[`${post.chatId}:${post.id}`]}
+              />
+            ))}
+          </div>
           <h2 className={styles.sectionTitle}>{lang('NilakRead')}</h2>
         </>
       )}
-      {posts.map((post) => (
-        <NilakReadCard
-          key={`${post.chatId}-${post.id}`}
-          post={post}
-          progress={progressByKey?.[`${post.chatId}:${post.id}`]}
-        />
-      ))}
+      <div className={styles.grid}>
+        {posts.map((post) => (
+          <NilakReadCard
+            key={`${post.chatId}-${post.id}`}
+            post={post}
+            progress={progressByKey?.[`${post.chatId}:${post.id}`]}
+          />
+        ))}
+      </div>
       {isLoading && !posts.length && <div className={styles.status}><Loading /></div>}
       {!isLoading && !posts.length && <div className={styles.status}>{lang('NilakReadEmpty')}</div>}
     </div>

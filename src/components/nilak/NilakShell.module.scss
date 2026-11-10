@@ -85,11 +85,16 @@
 }
 
 .rail {
+  // Stays in view even if the browser scrolls the whole page
+  position: sticky;
+  top: 0;
+
   flex-direction: column;
   gap: 0.25rem;
   align-self: stretch;
 
   width: 5.5rem;
+  max-height: 100vh;
   padding: 1rem 0.5rem;
   border-right: 0.0625rem solid var(--color-borders);
 
