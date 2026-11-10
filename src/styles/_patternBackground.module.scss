@@ -96,7 +96,7 @@
     background-color: #000;
     mix-blend-mode: soft-light;
 
-    mask-image: var(--custom-pattern, url("../assets/pattern.svg"));
+    mask-image: var(--custom-pattern, url("../assets/nilak-pattern.svg"));
     mask-repeat: repeat;
     mask-position: center;
     mask-size: 26.875rem auto;
@@ -105,7 +105,7 @@
   // Masked mode: the pattern masks the animated gradient itself, so the doodles reveal the
   // gradient over the black base (used for dark wallpapers, where the intensity is negative)
   &.withMaskedPattern .gradientCanvas {
-    mask-image: var(--custom-pattern, url("../assets/pattern.svg"));
+    mask-image: var(--custom-pattern, url("../assets/nilak-pattern.svg"));
     mask-repeat: repeat;
     mask-position: center;
     mask-size: 26.875rem auto;

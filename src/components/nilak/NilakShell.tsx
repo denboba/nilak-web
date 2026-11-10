@@ -18,6 +18,7 @@ import NilakReels from './NilakReels';
 import styles from './NilakShell.module.scss';
 
 import nilakLogo from '../../assets/nilak-logo.svg';
+import nilakSprig from '../../assets/nilak-sprig.svg';
 
 type OwnProps = {
   isNarrow?: boolean;
@@ -130,7 +131,8 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
               </button>
             </div>
           )}
-          {renderPage()}
+          {tab !== 'reels' && <img className={styles.sprig} src={nilakSprig} alt="" aria-hidden draggable={false} />}
+          <div className={styles.pageContent}>{renderPage()}</div>
         </div>
       )}
       {openedRead && <NilakReader chatId={openedRead.chatId} messageId={openedRead.messageId} />}

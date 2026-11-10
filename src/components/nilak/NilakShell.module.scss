@@ -29,6 +29,33 @@
   }
 }
 
+// The lilac sprig of Nilak for Android, hanging from the top corner behind the content
+.sprig {
+  pointer-events: none;
+  user-select: none;
+
+  position: absolute;
+  z-index: 0;
+  top: -0.5rem;
+  right: -0.75rem;
+
+  width: 11rem;
+
+  :global(html.theme-dark) & {
+    opacity: 0.55;
+  }
+
+  @media (max-width: 600px) {
+    width: 7rem;
+  }
+}
+
+.pageContent {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
 .pageBesideRail {
   left: 5.5rem;
 
@@ -240,9 +267,13 @@
 }
 
 .mobileTop {
+  position: relative;
+  z-index: 1;
+
   display: flex;
   gap: 0.5rem;
   align-items: center;
+
   padding: 0.75rem 1rem 0;
 
   .logoImage {

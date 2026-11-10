@@ -5,7 +5,7 @@ import jsxToHtml from '../../../util/element/jsxToHtml';
 import { renderStaticGradient } from '../../../util/gradientBackground';
 import { createStyledQrCode } from '../../../util/qrCode/buildStyledQrCode';
 
-import defaultPatternUrl from '../../../assets/pattern.svg';
+import defaultPatternUrl from '../../../assets/nilak-pattern.svg';
 
 export const QR_CODE_CARD_MIME_TYPE = 'image/png';
 

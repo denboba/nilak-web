@@ -46,7 +46,7 @@ export default function useChatBackground({
   );
 
   // A custom pattern renders once its mask blob or the previous pattern mask is ready. The built-in
-  // default uses `pattern.svg` and is always ready.
+  // default uses `nilak-pattern.svg` and is always ready.
   const isPatternVisible = model.isPattern && (model.isDefault || Boolean(customBackgroundValue));
   // The canvas is marked ready as soon as the gradient draws, but a masked pattern's mask only
   // applies once its blob loads. Keep the canvas hidden until then, so its full unmasked gradient
