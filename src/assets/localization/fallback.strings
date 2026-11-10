@@ -4554,15 +4554,10 @@
 "NilakCreateNoChannel" = "Your posts go to your personal channel. Create a channel, then choose it in Edit profile under Personal channel.";
 "NilakCreateChannel" = "Create a channel";
 "NilakCreatePost" = "Post";
-"NilakCreatePostHint" = "Text, photos and more";
 "NilakCreateMedia" = "Photo or video";
-"NilakCreateMediaHint" = "From your computer or phone";
 "NilakCreatePoll" = "Poll";
-"NilakCreatePollHint" = "Ask your followers";
 "NilakCreateFile" = "File";
-"NilakCreateFileHint" = "Documents, music, PDF";
 "NilakCreateBarruu" = "Barruu";
-"NilakCreateBarruuHint" = "Long-form writing with a title";
 "NilakWriterTitle" = "Title";
 "NilakWriterSubtitle" = "Subtitle (optional)";
 "NilakWriterBody" = "Write your Barruu…";
@@ -4579,3 +4574,4 @@
 "NilakWriterDivider" = "Divider";
 "NilakWriterPhoto" = "Photo or video";
 "NilakReadPercent" = "{percent}% read";
+"NilakCreateMusic" = "Music";

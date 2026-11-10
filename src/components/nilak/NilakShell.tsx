@@ -6,9 +6,12 @@ import buildClassName from '../../util/buildClassName';
 import { getNilakTab, getOpenedRead, setNilakTab } from './helpers/nilakTab';
 
 import useDerivedState from '../../hooks/useDerivedState';
+import useFlag from '../../hooks/useFlag';
 import useLang from '../../hooks/useLang';
+import useLastCallback from '../../hooks/useLastCallback';
 
 import NilakCreate from './NilakCreate';
+import NilakCreateMenu from './NilakCreateMenu';
 import NilakHome from './NilakHome';
 import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
@@ -52,6 +55,14 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
+  const [isCreateMenuOpen, openCreateMenu, closeCreateMenu] = useFlag();
+  const toggleCreateMenu = useLastCallback(() => {
+    if (isCreateMenuOpen) {
+      closeCreateMenu();
+    } else {
+      openCreateMenu();
+    }
+  });
   const isPageOpen = tab !== 'chats';
   // On phones the bar gives way to an open chat, like the tab bar in Nilak for Android
   const isBarShown = !isNarrow || isPageOpen || !isChatOpen;
@@ -100,14 +111,17 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             </button>
           ))}
           {!isNarrow && (
-            <button
-              type="button"
-              className={buildClassName(styles.create, tab === 'create' && styles.active)}
-              onClick={() => setNilakTab('create')}
-            >
-              {renderIcon(PLUS_PATH)}
-              <span className={styles.label}>{lang('NilakCreate')}</span>
-            </button>
+            <div className={styles.createAnchor}>
+              <button
+                type="button"
+                className={buildClassName(styles.create, (tab === 'create' || isCreateMenuOpen) && styles.active)}
+                onClick={toggleCreateMenu}
+              >
+                {renderIcon(PLUS_PATH)}
+                <span className={styles.label}>{lang('NilakCreate')}</span>
+              </button>
+              <NilakCreateMenu isOpen={isCreateMenuOpen} placement="side" onClose={closeCreateMenu} />
+            </div>
           )}
         </nav>
       )}
@@ -121,14 +135,17 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             <div className={styles.mobileTop}>
               <img className={styles.logoImage} src={nilakLogo} alt="" />
               <span className={styles.logoText}>Nilak</span>
-              <button
-                type="button"
-                className={styles.mobileCreate}
-                aria-label={lang('NilakCreate')}
-                onClick={() => setNilakTab('create')}
-              >
-                {renderIcon(PLUS_PATH)}
-              </button>
+              <div className={buildClassName(styles.createAnchor, styles.mobileCreateAnchor)}>
+                <button
+                  type="button"
+                  className={styles.mobileCreate}
+                  aria-label={lang('NilakCreate')}
+                  onClick={toggleCreateMenu}
+                >
+                  {renderIcon(PLUS_PATH)}
+                </button>
+                <NilakCreateMenu isOpen={isCreateMenuOpen} placement="below" onClose={closeCreateMenu} />
+              </div>
             </div>
           )}
           {tab !== 'reels' && <img className={styles.sprig} src={nilakSprig} alt="" aria-hidden draggable={false} />}

@@ -268,7 +268,8 @@
 
 .mobileTop {
   position: relative;
-  z-index: 1;
+  // Above the page content, so the Create menu opens over the feed
+  z-index: 2;
 
   display: flex;
   gap: 0.5rem;
@@ -286,6 +287,16 @@
   }
 }
 
+.createAnchor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileCreateAnchor {
+  margin-left: auto;
+}
+
 .mobileCreate {
   cursor: pointer;
 
@@ -294,7 +305,6 @@
 
   width: 2.5rem;
   height: 2.5rem;
-  margin-left: auto;
   border: none;
   border-radius: 50%;
 

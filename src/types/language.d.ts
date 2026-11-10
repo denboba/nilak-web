@@ -3411,15 +3411,10 @@ export interface LangPair {
   'NilakCreateNoChannel': undefined;
   'NilakCreateChannel': undefined;
   'NilakCreatePost': undefined;
-  'NilakCreatePostHint': undefined;
   'NilakCreateMedia': undefined;
-  'NilakCreateMediaHint': undefined;
   'NilakCreatePoll': undefined;
-  'NilakCreatePollHint': undefined;
   'NilakCreateFile': undefined;
-  'NilakCreateFileHint': undefined;
   'NilakCreateBarruu': undefined;
-  'NilakCreateBarruuHint': undefined;
   'NilakWriterTitle': undefined;
   'NilakWriterSubtitle': undefined;
   'NilakWriterBody': undefined;
@@ -3435,6 +3430,7 @@ export interface LangPair {
   'NilakWriterTable': undefined;
   'NilakWriterDivider': undefined;
   'NilakWriterPhoto': undefined;
+  'NilakCreateMusic': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
