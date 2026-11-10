@@ -7,7 +7,7 @@ import { selectChat } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import renderText from '../common/helpers/renderText';
 import {
-  getBarruuSubtitle, getBarruuTitle, getIsBarruu, getReadMinutes,
+  getBarruuSubtitle, getIsBarruu, getReadMinutes, getReadTitle,
 } from './helpers/barruu';
 import { setOpenedRead } from './helpers/nilakTab';
 
@@ -36,7 +36,7 @@ const NilakReadCard = ({
   const lang = useLang();
   const isBarruu = getIsBarruu(post);
   const text = post.content.text?.text || '';
-  const title = isBarruu ? getBarruuTitle(post) : text.split('\n', 1)[0];
+  const title = getReadTitle(post);
   const excerpt = isBarruu ? getBarruuSubtitle(post) : text.slice(title.length, title.length + EXCERPT_LENGTH).trim();
   const minutes = getReadMinutes(post);
 

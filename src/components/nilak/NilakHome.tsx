@@ -6,12 +6,18 @@ import type { ApiMessage } from '../../api/types';
 import { GLOBAL_SUGGESTED_CHANNELS_ID } from '../../config';
 import { selectSimilarChannelIds } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import renderText from '../common/helpers/renderText';
+import { getIsReadPost, getReadTitle } from './helpers/barruu';
+import { getOpenedRead, setOpenedRead } from './helpers/nilakTab';
+import { getReadingProgress } from './helpers/readingProgress';
 
+import useDerivedState from '../../hooks/useDerivedState';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
 import Loading from '../ui/Loading';
 import NilakPostCard from './NilakPostCard';
+import NilakStories from './NilakStories';
 import NilakSuggestedChannel from './NilakSuggestedChannel';
 
 import styles from './NilakHome.module.scss';
@@ -34,6 +40,8 @@ type FeedItem = { post: ApiMessage; isSuggested?: boolean };
 const SUGGESTION_EVERY = 3;
 const PAGE_SIZE = 20;
 const SUGGESTED_CHANNELS_SHOWN = 5;
+const KEEP_READING_SHOWN = 3;
+const FULL_PERCENT = 100;
 
 const NilakHome = ({
   isNarrow, isLoading, followingPosts, suggestedPosts, suggestedChannelIds,
@@ -79,6 +87,18 @@ const NilakHome = ({
     setShownCount((count) => count + PAGE_SIZE);
   });
 
+  // Barruu and long posts started but not finished, read again whenever the reader closes
+  const openedRead = useDerivedState(getOpenedRead);
+  const unfinished = useMemo(() => {
+    if (openedRead) return [];
+
+    return (followingPosts || []).concat(suggestedPosts || [])
+      .filter(getIsReadPost)
+      .map((post) => ({ post, progress: getReadingProgress(post.chatId, post.id) }))
+      .filter(({ progress }) => progress > 0 && progress < FULL_PERCENT)
+      .slice(0, KEEP_READING_SHOWN);
+  }, [followingPosts, suggestedPosts, openedRead]);
+
   const isEmpty = !isLoading && !items.length;
 
   return (
@@ -103,6 +123,8 @@ const NilakHome = ({
           </div>
         </div>
 
+        <NilakStories />
+
         {items.slice(0, shownCount).map(({ post, isSuggested }) => (
           <NilakPostCard key={`${post.chatId}-${post.id}`} post={post} isSuggested={isSuggested} />
         ))}
@@ -126,6 +148,29 @@ const NilakHome = ({
               <h3 className={styles.panelTitle}>{lang('NilakSuggestedTitle')}</h3>
               {suggestedChannelIds.slice(0, SUGGESTED_CHANNELS_SHOWN).map((id) => (
                 <NilakSuggestedChannel key={id} chatId={id} />
+              ))}
+            </div>
+          )}
+          {Boolean(unfinished.length) && (
+            <div className={styles.panel}>
+              <h3 className={styles.panelTitle}>{lang('NilakKeepReading')}</h3>
+              {unfinished.map(({ post, progress }) => (
+                <button
+                  key={`${post.chatId}-${post.id}`}
+                  type="button"
+                  className={styles.keepReading}
+                  onClick={() => setOpenedRead({ chatId: post.chatId, messageId: post.id })}
+                >
+                  <span className={styles.keepReadingTitle}>
+                    {renderText(getReadTitle(post))}
+                  </span>
+                  <span className={styles.keepReadingMeta}>
+                    {lang('NilakReadPercent', { percent: Math.round(progress) })}
+                  </span>
+                  <span className={styles.keepReadingBar}>
+                    <i className={styles.keepReadingFill} style={`width: ${progress}%`} />
+                  </span>
+                </button>
               ))}
             </div>
           )}

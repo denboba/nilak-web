@@ -77,6 +77,11 @@ export function getBarruuTitle(message: ApiMessage) {
   return base.replace(/[-_]/g, ' ');
 }
 
+// The title shown in lists: a Barruu's title, else the first line of a long post
+export function getReadTitle(message: ApiMessage) {
+  return getIsBarruu(message) ? getBarruuTitle(message) : (message.content.text?.text || '').split('\n', 1)[0];
+}
+
 export function getBarruuSubtitle(message: ApiMessage) {
   const caption = message.content.text?.text.trim() || '';
   const newLineIndex = caption.indexOf('\n');

@@ -4578,3 +4578,4 @@
 "NilakWriterTable" = "Table";
 "NilakWriterDivider" = "Divider";
 "NilakWriterPhoto" = "Photo or video";
+"NilakReadPercent" = "{percent}% read";

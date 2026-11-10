@@ -1,13 +1,16 @@
 import { memo } from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
-import type { ApiChat, ApiMessage, ApiReaction, ApiReactionCount } from '../../api/types';
+import type {
+  ApiChat, ApiMessage, ApiReaction, ApiReactionCount, ApiThreadInfo,
+} from '../../api/types';
 
 import {
   getMessagePhoto, getMessageVideo, getPhotoMediaHash, getVideoMediaHash,
 } from '../../global/helpers';
 import { getReactionKey } from '../../global/helpers/reactions';
 import { selectChat, selectChatMessage } from '../../global/selectors';
+import { selectThreadInfo } from '../../global/selectors/threads';
 import buildClassName from '../../util/buildClassName';
 import { formatCompactTimestamp, secondsToDate } from '../../util/localization/dateFormat';
 import { formatIntegerCompact } from '../../util/textFormat';
@@ -35,6 +38,7 @@ type OwnProps = {
 type StateProps = {
   chat?: ApiChat;
   liveMessage?: ApiMessage;
+  threadInfo?: ApiThreadInfo;
 };
 
 const MAX_REACTIONS = 3;
@@ -42,10 +46,10 @@ const MAX_REACTIONS = 3;
 const FOLD_TEXT_LENGTH = 320;
 
 const NilakPostCard = ({
-  post, isSuggested, chat, liveMessage,
+  post, isSuggested, chat, liveMessage, threadInfo,
 }: OwnProps & StateProps) => {
   const {
-    openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction,
+    openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction, openThread,
   } = getActions();
   const lang = useLang();
   const [isExpanded, expand] = useFlag();
@@ -75,6 +79,20 @@ const NilakPostCard = ({
   const handleOpenChannel = useLastCallback(() => {
     setNilakTab('chats');
     openChat({ id: chatId });
+  });
+
+  const commentsInfo = threadInfo?.isCommentsInfo ? threadInfo : undefined;
+
+  const handleComments = useLastCallback(() => {
+    if (!commentsInfo) return;
+
+    setNilakTab('chats');
+    openThread({
+      isComments: true,
+      chatId: commentsInfo.chatId,
+      originMessageId: commentsInfo.originMessageId,
+      originChannelId: commentsInfo.originChannelId,
+    });
   });
 
   const handleShare = useLastCallback(() => {
@@ -158,6 +176,17 @@ const NilakPostCard = ({
               {formatIntegerCompact(lang, message.viewsCount)}
             </span>
           )}
+          {commentsInfo && (
+            <button type="button" className={styles.stat} onClick={handleComments}>
+              <Icon name="comments" />
+              {' '}
+              {commentsInfo.messagesCount
+                ? lang('NilakComments', {
+                  count: formatIntegerCompact(lang, commentsInfo.messagesCount),
+                }, { pluralValue: commentsInfo.messagesCount })
+                : lang('NilakComment')}
+            </button>
+          )}
           <button type="button" className={styles.stat} onClick={handleShare}>
             <Icon name="forward" />
             {' '}
@@ -173,5 +202,6 @@ export default memo(withGlobal<OwnProps>(
   (global, { post }): Complete<StateProps> => ({
     chat: selectChat(global, post.chatId),
     liveMessage: selectChatMessage(global, post.chatId, post.id),
+    threadInfo: selectThreadInfo(global, post.chatId, post.id),
   }),
 )(NilakPostCard));

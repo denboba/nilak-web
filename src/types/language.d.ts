@@ -5694,6 +5694,9 @@ export interface LangPairWithVariables<V = LangVariable> {
   'NilakCreateTo': {
     'title': V;
   };
+  'NilakReadPercent': {
+    'percent': V;
+  };
 }
 
 export interface LangPairPlural {
@@ -7097,7 +7100,8 @@ export interface LangKeyGroups {
       | 'GiftDiscount'
       | 'GiftCraftSuccessChance'
       | 'PaidMessageTransactionDescription'
-      | 'StarTransactionCommission';
+      | 'StarTransactionCommission'
+      | 'NilakReadPercent';
     variables: 'percent';
   };
   'receiver': {
