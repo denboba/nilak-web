@@ -9,7 +9,8 @@ import type { GlobalState } from '../../../global/types';
 import type { MessageListType, ThemeKey, ThreadId } from '../../../types';
 
 import {
-  CONTENT_TYPES_WITH_PREVIEW, DEBUG_LOG_FILENAME, SUPPORTED_AUDIO_CONTENT_TYPES,
+  CONTENT_TYPES_WITH_PREVIEW, DEBUG_LOG_FILENAME, IS_NILAK_SHELL,
+  SUPPORTED_AUDIO_CONTENT_TYPES,
   SUPPORTED_PHOTO_CONTENT_TYPES,
   SUPPORTED_VIDEO_CONTENT_TYPES,
 } from '../../../config';
@@ -24,6 +25,7 @@ import buildClassName from '../../../util/buildClassName';
 import { getDebugLogs } from '../../../util/debugConsole';
 import { validateFiles } from '../../../util/files';
 import { openSystemFilesDialog } from '../../../util/systemFilesDialog';
+import { openNilakBarruuWriter } from '../../nilak/helpers/nilakTab';
 
 import useSelector from '../../../hooks/data/useSelector';
 import useFlag from '../../../hooks/useFlag';
@@ -321,6 +323,10 @@ const AttachMenu = ({
             )}
             {canExpandRichInput && (
               <MenuItem icon="article" onClick={onRichInputExpand}>{lang('AttachmentMenuArticle')}</MenuItem>
+            )}
+            {/* Nilak: a Barruu article, next to Telegram's article */}
+            {IS_NILAK_SHELL && canSendDocuments && !editingMessage && !isScheduled && (
+              <MenuItem icon="edit" onClick={() => openNilakBarruuWriter(chatId)}>{lang('NilakCreateBarruu')}</MenuItem>
             )}
             {canSendMoney && !editingMessage && (
               <MenuItem icon="gram-outline" onClick={handleSendGram}>{lang('WalletSendMoney')}</MenuItem>

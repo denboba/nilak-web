@@ -4550,13 +4550,8 @@
 "NilakEditProfile" = "Edit profile";
 "NilakShareProfile" = "Share profile";
 "NilakCreateTitle" = "What would you like to share?";
-"NilakCreateTo" = "Posts go to {title}";
 "NilakCreateNoChannel" = "Your posts go to your personal channel. Create a channel, then choose it in Edit profile under Personal channel.";
 "NilakCreateChannel" = "Create a channel";
-"NilakCreatePost" = "Post";
-"NilakCreateMedia" = "Photo or video";
-"NilakCreatePoll" = "Poll";
-"NilakCreateFile" = "File";
 "NilakCreateBarruu" = "Barruu";
 "NilakWriterTitle" = "Title";
 "NilakWriterSubtitle" = "Subtitle (optional)";
@@ -4574,4 +4569,3 @@
 "NilakWriterDivider" = "Divider";
 "NilakWriterPhoto" = "Photo or video";
 "NilakReadPercent" = "{percent}% read";
-"NilakCreateMusic" = "Music";

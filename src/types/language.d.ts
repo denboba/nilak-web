@@ -3410,10 +3410,6 @@ export interface LangPair {
   'NilakCreateTitle': undefined;
   'NilakCreateNoChannel': undefined;
   'NilakCreateChannel': undefined;
-  'NilakCreatePost': undefined;
-  'NilakCreateMedia': undefined;
-  'NilakCreatePoll': undefined;
-  'NilakCreateFile': undefined;
   'NilakCreateBarruu': undefined;
   'NilakWriterTitle': undefined;
   'NilakWriterSubtitle': undefined;
@@ -3430,7 +3426,6 @@ export interface LangPair {
   'NilakWriterTable': undefined;
   'NilakWriterDivider': undefined;
   'NilakWriterPhoto': undefined;
-  'NilakCreateMusic': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5687,9 +5682,6 @@ export interface LangPairWithVariables<V = LangVariable> {
   'NilakProfileChannel': {
     'title': V;
   };
-  'NilakCreateTo': {
-    'title': V;
-  };
   'NilakReadPercent': {
     'percent': V;
   };
@@ -7263,8 +7255,7 @@ export interface LangKeyGroups {
       | 'ActionChangedTitleChannel'
       | 'ActionCreatedChatYou'
       | 'AiToneCreated'
-      | 'NilakProfileChannel'
-      | 'NilakCreateTo';
+      | 'NilakProfileChannel';
     variables: 'title';
   };
   'from,text': {

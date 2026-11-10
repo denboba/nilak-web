@@ -1,17 +1,19 @@
 import { memo } from '../../lib/teact/teact';
+import { getActions, getGlobal } from '../../global';
 
 import type { NilakTab } from './helpers/nilakTab';
 
+import { selectNilakProfileChannel } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
-import { getNilakTab, getOpenedRead, setNilakTab } from './helpers/nilakTab';
+import {
+  getBarruuChatId, getNilakTab, getOpenedRead, openNilakBarruuWriter, setNilakTab,
+} from './helpers/nilakTab';
 
 import useDerivedState from '../../hooks/useDerivedState';
-import useFlag from '../../hooks/useFlag';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
 import NilakCreate from './NilakCreate';
-import NilakCreateMenu from './NilakCreateMenu';
 import NilakHome from './NilakHome';
 import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
@@ -52,16 +54,23 @@ const NAV_ITEMS: NavItem[] = [
 const PLUS_PATH = 'M12 5v14M5 12h14';
 
 const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
+  const { openChat } = getActions();
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
-  const [isCreateMenuOpen, openCreateMenu, closeCreateMenu] = useFlag();
-  const toggleCreateMenu = useLastCallback(() => {
-    if (isCreateMenuOpen) {
-      closeCreateMenu();
-    } else {
-      openCreateMenu();
+  const barruuChatId = useDerivedState(getBarruuChatId);
+
+  // Create opens the person's channel to post as in Telegram; without one, the Create page explains how to set it
+  const handleCreate = useLastCallback(() => {
+    const global = getGlobal();
+    const channel = global.currentUserId ? selectNilakProfileChannel(global, global.currentUserId) : undefined;
+    if (!channel) {
+      openNilakBarruuWriter();
+      return;
     }
+
+    setNilakTab('chats');
+    openChat({ id: channel.id });
   });
   const isPageOpen = tab !== 'chats';
   // On phones the bar gives way to an open chat, like the tab bar in Nilak for Android
@@ -80,7 +89,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'read') return <NilakRead />;
     if (tab === 'reels') return <NilakReels />;
     if (tab === 'profile') return <NilakProfile isNarrow={isNarrow} />;
-    if (tab === 'create') return <NilakCreate />;
+    if (tab === 'create') return <NilakCreate chatId={barruuChatId} />;
 
     return undefined;
   }
@@ -111,17 +120,14 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             </button>
           ))}
           {!isNarrow && (
-            <div className={styles.createAnchor}>
-              <button
-                type="button"
-                className={buildClassName(styles.create, (tab === 'create' || isCreateMenuOpen) && styles.active)}
-                onClick={toggleCreateMenu}
-              >
-                {renderIcon(PLUS_PATH)}
-                <span className={styles.label}>{lang('NilakCreate')}</span>
-              </button>
-              <NilakCreateMenu isOpen={isCreateMenuOpen} placement="side" onClose={closeCreateMenu} />
-            </div>
+            <button
+              type="button"
+              className={buildClassName(styles.create, tab === 'create' && styles.active)}
+              onClick={handleCreate}
+            >
+              {renderIcon(PLUS_PATH)}
+              <span className={styles.label}>{lang('NilakCreate')}</span>
+            </button>
           )}
         </nav>
       )}
@@ -135,17 +141,14 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             <div className={styles.mobileTop}>
               <img className={styles.logoImage} src={nilakLogo} alt="" />
               <span className={styles.logoText}>Nilak</span>
-              <div className={buildClassName(styles.createAnchor, styles.mobileCreateAnchor)}>
-                <button
-                  type="button"
-                  className={styles.mobileCreate}
-                  aria-label={lang('NilakCreate')}
-                  onClick={toggleCreateMenu}
-                >
-                  {renderIcon(PLUS_PATH)}
-                </button>
-                <NilakCreateMenu isOpen={isCreateMenuOpen} placement="below" onClose={closeCreateMenu} />
-              </div>
+              <button
+                type="button"
+                className={styles.mobileCreate}
+                aria-label={lang('NilakCreate')}
+                onClick={handleCreate}
+              >
+                {renderIcon(PLUS_PATH)}
+              </button>
             </div>
           )}
           {tab !== 'reels' && <img className={styles.sprig} src={nilakSprig} alt="" aria-hidden draggable={false} />}

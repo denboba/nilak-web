@@ -287,16 +287,6 @@
   }
 }
 
-.createAnchor {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.mobileCreateAnchor {
-  margin-left: auto;
-}
-
 .mobileCreate {
   cursor: pointer;
 
@@ -305,6 +295,7 @@
 
   width: 2.5rem;
   height: 2.5rem;
+  margin-left: auto;
   border: none;
   border-radius: 50%;
 

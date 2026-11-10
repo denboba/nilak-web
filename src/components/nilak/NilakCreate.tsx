@@ -4,7 +4,7 @@ import { getActions, withGlobal } from '../../global';
 import type { ApiChat } from '../../api/types';
 import { LeftColumnContent, SettingsScreens } from '../../types';
 
-import { selectNilakProfileChannel } from '../../global/selectors';
+import { selectChat, selectNilakProfileChannel } from '../../global/selectors';
 import { setNilakTab } from './helpers/nilakTab';
 
 import useLang from '../../hooks/useLang';
@@ -14,17 +14,22 @@ import NilakBarruuWriter from './NilakBarruuWriter';
 
 import styles from './NilakCreate.module.scss';
 
+type OwnProps = {
+  // The chat whose attach menu opened the writer; none means the person's own channel
+  chatId?: string;
+};
+
 type StateProps = {
   channel?: ApiChat;
 };
 
-// The Create page: the Barruu writer, or how to choose the channel posts go to
-const NilakCreate = ({ channel }: StateProps) => {
+// The Barruu writer for a chat or the person's channel, or how to choose that channel
+const NilakCreate = ({ chatId, channel }: OwnProps & StateProps) => {
   const { openLeftColumnContent, openSettingsScreen } = getActions();
   const lang = useLang();
 
   const handleClose = useLastCallback(() => {
-    setNilakTab('home');
+    setNilakTab(chatId ? 'chats' : 'home');
   });
 
   const handleCreateChannel = useLastCallback(() => {
@@ -58,8 +63,9 @@ const NilakCreate = ({ channel }: StateProps) => {
   );
 };
 
-export default memo(withGlobal(
-  (global): Complete<StateProps> => ({
-    channel: global.currentUserId ? selectNilakProfileChannel(global, global.currentUserId) : undefined,
+export default memo(withGlobal<OwnProps>(
+  (global, { chatId }): Complete<StateProps> => ({
+    channel: chatId ? selectChat(global, chatId)
+      : global.currentUserId ? selectNilakProfileChannel(global, global.currentUserId) : undefined,
   }),
 )(NilakCreate));
