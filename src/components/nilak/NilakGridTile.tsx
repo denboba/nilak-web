@@ -65,6 +65,16 @@ const NilakGridTile = ({ post }: OwnProps) => {
       );
     }
 
+    const document = post.content.document;
+    if (document) {
+      return (
+        <div className={styles.tileText}>
+          <Icon name="document" className={styles.tileFlower} />
+          {renderText(document.fileName)}
+        </div>
+      );
+    }
+
     const text = post.content.text?.text;
     return text ? <div className={styles.tileText}>{renderText(text.slice(0, EXCERPT_LENGTH))}</div> : undefined;
   }

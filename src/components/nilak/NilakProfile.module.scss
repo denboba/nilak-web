@@ -188,7 +188,9 @@
 
 .empty {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
 
   padding: 3rem 1.5rem;
 

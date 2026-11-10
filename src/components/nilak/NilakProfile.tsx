@@ -121,7 +121,14 @@ const NilakProfile = ({
   function renderEmpty() {
     if (isLoading) return <div className={styles.empty}><Loading /></div>;
     if (tab === 'saved') return <div className={styles.empty}>{lang('NilakSavedEmpty')}</div>;
-    if (!channel) return <div className={styles.empty}>{lang('NilakProfileNoChannel')}</div>;
+    if (!channel) {
+      return (
+        <div className={styles.empty}>
+          <p>{lang('NilakProfileNoChannel')}</p>
+          <button type="button" className={styles.button} onClick={handleEdit}>{lang('NilakEditProfile')}</button>
+        </div>
+      );
+    }
 
     return <div className={styles.empty}>{lang('NilakProfileNoPosts')}</div>;
   }

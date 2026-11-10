@@ -4545,13 +4545,13 @@
 "NilakFollowersTitle" = "Followers";
 "NilakSavedEmpty" = "Photos and videos you save show up here.";
 "NilakProfileNoPosts" = "No posts yet.";
-"NilakProfileNoChannel" = "Your posts live in your personal channel. Create a channel and add it to your profile in Settings to see your posts here.";
+"NilakProfileNoChannel" = "Your posts come from your personal channel. Choose it in Edit profile, under Personal channel, and your posts show here.";
 "NilakProfileChannel" = "Posts from {title}";
 "NilakEditProfile" = "Edit profile";
 "NilakShareProfile" = "Share profile";
 "NilakCreateTitle" = "What would you like to share?";
 "NilakCreateTo" = "Posts go to {title}";
-"NilakCreateNoChannel" = "Your posts go to your own channel. Create one first, then come back here.";
+"NilakCreateNoChannel" = "Your posts go to your personal channel. Create a channel, then choose it in Edit profile under Personal channel.";
 "NilakCreateChannel" = "Create a channel";
 "NilakCreatePost" = "Post";
 "NilakCreatePostHint" = "Text, photos and more";
