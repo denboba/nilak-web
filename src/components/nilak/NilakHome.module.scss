@@ -60,21 +60,8 @@
   text-align: center;
 }
 
-.showMore {
-  cursor: pointer;
-
-  display: block;
-
-  margin: 0.5rem auto 0;
-  padding: 0.625rem 1.5rem;
-  border: none;
-  border-radius: 62.4375rem;
-
-  font-size: 0.9375rem;
-  font-weight: var(--font-weight-medium);
-  color: var(--color-primary);
-
-  background: var(--color-background);
+.end {
+  height: 0.0625rem;
 }
 
 .side {

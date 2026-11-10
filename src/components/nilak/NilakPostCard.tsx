@@ -5,11 +5,8 @@ import type {
   ApiChat, ApiMessage, ApiReaction, ApiReactionCount, ApiThreadInfo,
 } from '../../api/types';
 
-import {
-  getMessagePhoto, getMessageVideo, getPhotoMediaHash, getVideoMediaHash,
-} from '../../global/helpers';
 import { getReactionKey } from '../../global/helpers/reactions';
-import { selectChat, selectChatMessage } from '../../global/selectors';
+import { selectChat, selectChatMessage, selectNilakAlbum } from '../../global/selectors';
 import { selectThreadInfo } from '../../global/selectors/threads';
 import buildClassName from '../../util/buildClassName';
 import { formatCompactTimestamp, secondsToDate } from '../../util/localization/dateFormat';
@@ -22,10 +19,10 @@ import { setNilakTab } from './helpers/nilakTab';
 import useFlag from '../../hooks/useFlag';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
-import useMedia from '../../hooks/useMedia';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import NilakMediaTile from './NilakMediaTile';
 import NilakReadCard from './NilakReadCard';
 
 import styles from './NilakPostCard.module.scss';
@@ -39,14 +36,17 @@ type StateProps = {
   chat?: ApiChat;
   liveMessage?: ApiMessage;
   threadInfo?: ApiThreadInfo;
+  album?: ApiMessage[];
 };
 
 const MAX_REACTIONS = 3;
+// Album posts show up to four photos; the last tile counts the rest
+const MAX_ALBUM_TILES = 4;
 // Longer texts start folded with Show more, like the smart fold in Nilak for Android
 const FOLD_TEXT_LENGTH = 320;
 
 const NilakPostCard = ({
-  post, isSuggested, chat, liveMessage, threadInfo,
+  post, isSuggested, chat, liveMessage, threadInfo, album,
 }: OwnProps & StateProps) => {
   const {
     openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction, openThread,
@@ -57,12 +57,7 @@ const NilakPostCard = ({
   const message = liveMessage || post;
   const { chatId, id: messageId } = message;
   const text = message.content.text;
-  const photo = getMessagePhoto(message);
-  const video = getMessageVideo(message);
-  const mediaHash = photo ? getPhotoMediaHash(photo, 'inline')
-    : video && !video.isRound ? getVideoMediaHash(video, 'pictogram') : undefined;
-  const mediaUrl = useMedia(mediaHash);
-  const thumbUrl = (photo || video)?.thumbnail?.dataUri;
+  const albumShown = album && album.length > 1 ? album.slice(0, MAX_ALBUM_TILES) : undefined;
   const isFoldable = Boolean(text && text.text.length > FOLD_TEXT_LENGTH);
   const isBarruu = getIsBarruu(message);
 
@@ -148,11 +143,20 @@ const NilakPostCard = ({
         <button type="button" className={styles.more} onClick={expand}>{lang('ShowMore')}</button>
       )}
 
-      {(mediaUrl || thumbUrl) && (
-        <div className={styles.media} onClick={handleOpen}>
-          <img className={styles.mediaImage} src={mediaUrl || thumbUrl} alt="" draggable={false} />
-          {video && <div className={styles.play}><Icon name="play" /></div>}
+      {albumShown ? (
+        <div className={buildClassName(styles.album, albumShown.length === 3 && styles.albumOfThree)}>
+          {albumShown.map((part, index) => (
+            <NilakMediaTile
+              key={part.id}
+              message={part}
+              className={styles.albumTile}
+              moreCount={index === albumShown.length - 1 ? album!.length - albumShown.length : undefined}
+              onClick={handleOpen}
+            />
+          ))}
         </div>
+      ) : (
+        <NilakMediaTile message={message} onClick={handleOpen} />
       )}
 
       <div className={styles.actions}>
@@ -203,5 +207,6 @@ export default memo(withGlobal<OwnProps>(
     chat: selectChat(global, post.chatId),
     liveMessage: selectChatMessage(global, post.chatId, post.id),
     threadInfo: selectThreadInfo(global, post.chatId, post.id),
+    album: selectNilakAlbum(global, post),
   }),
 )(NilakPostCard));

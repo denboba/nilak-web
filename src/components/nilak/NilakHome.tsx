@@ -1,4 +1,6 @@
-import { memo, useEffect, useMemo, useState } from '../../lib/teact/teact';
+import {
+  memo, useEffect, useMemo, useRef, useState,
+} from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import type { ApiMessage } from '../../api/types';
@@ -28,6 +30,7 @@ type OwnProps = {
 
 type StateProps = {
   isLoading?: boolean;
+  hasMore?: boolean;
   followingPosts?: ApiMessage[];
   suggestedPosts?: ApiMessage[];
   suggestedChannelIds?: string[];
@@ -39,12 +42,14 @@ type FeedItem = { post: ApiMessage; isSuggested?: boolean };
 // For you places one suggested post after every few posts from followed channels, never first
 const SUGGESTION_EVERY = 3;
 const PAGE_SIZE = 20;
+// The next posts are prepared this far before the end of the list comes into view
+const END_MARGIN = '800px';
 const SUGGESTED_CHANNELS_SHOWN = 5;
 const KEEP_READING_SHOWN = 3;
 const FULL_PERCENT = 100;
 
 const NilakHome = ({
-  isNarrow, isLoading, followingPosts, suggestedPosts, suggestedChannelIds,
+  isNarrow, isLoading, hasMore, followingPosts, suggestedPosts, suggestedChannelIds,
 }: OwnProps & StateProps) => {
   const { loadNilakFeed } = getActions();
   const lang = useLang();
@@ -83,9 +88,28 @@ const NilakHome = ({
     setShownCount(PAGE_SIZE);
   });
 
-  const handleShowMore = useLastCallback(() => {
-    setShownCount((count) => count + PAGE_SIZE);
+  // Near the end of the list, show the next loaded posts, then load older ones from the channels
+  const handleReachEnd = useLastCallback(() => {
+    if (items.length > shownCount) {
+      setShownCount((count) => count + PAGE_SIZE);
+    } else if (hasMore && !isLoading) {
+      loadNilakFeed({ isMore: true });
+      setShownCount((count) => count + PAGE_SIZE);
+    }
   });
+
+  const endRef = useRef<HTMLDivElement>();
+  useEffect(() => {
+    const end = endRef.current;
+    if (!end) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) handleReachEnd();
+    }, { rootMargin: END_MARGIN });
+    observer.observe(end);
+
+    return () => observer.disconnect();
+  }, [handleReachEnd, items.length]);
 
   // Barruu and long posts started but not finished, read again whenever the reader closes
   const openedRead = useDerivedState(getOpenedRead);
@@ -136,9 +160,8 @@ const NilakHome = ({
           </div>
         )}
         {isEmpty && <div className={styles.status}>{lang('NilakFeedEmpty')}</div>}
-        {items.length > shownCount && (
-          <button type="button" className={styles.showMore} onClick={handleShowMore}>{lang('ShowMore')}</button>
-        )}
+        {isLoading && Boolean(items.length) && <div className={styles.status}><Loading /></div>}
+        <div ref={endRef} className={styles.end} />
       </div>
 
       {!isNarrow && (
@@ -184,6 +207,7 @@ const NilakHome = ({
 export default memo(withGlobal<OwnProps>(
   (global): Complete<StateProps> => ({
     isLoading: global.nilakFeed?.isLoading,
+    hasMore: global.nilakFeed?.hasMore,
     followingPosts: global.nilakFeed?.followingPosts,
     suggestedPosts: global.nilakFeed?.suggestedPosts,
     suggestedChannelIds: selectSimilarChannelIds(global, GLOBAL_SUGGESTED_CHANNELS_ID)?.similarChannelIds,

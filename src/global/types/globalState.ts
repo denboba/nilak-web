@@ -122,6 +122,11 @@ export type GlobalState = {
     isLoading?: boolean;
     followingPosts?: ApiMessage[];
     suggestedPosts?: ApiMessage[];
+    // The photos and videos of each album post, by `chatId-groupedId`
+    albums?: Record<string, ApiMessage[]>;
+    // The oldest loaded post per channel; `false` once a channel has no older posts
+    cursorByChatId?: Record<string, number | false>;
+    hasMore?: boolean;
   };
   // Nilak: the own profile, posts from the personal channel and media from Saved Messages, kept in memory only
   nilakProfile?: {

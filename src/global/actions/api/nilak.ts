@@ -11,7 +11,7 @@ import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
 import {
-  selectChat, selectChatLastMessage, selectNilakProfileChannel, selectSimilarChannelIds, selectUser,
+  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectNilakProfileChannel, selectSimilarChannelIds, selectUser,
 } from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
@@ -27,8 +27,9 @@ const REELS_CHANNELS_PER_ROUND = 10;
 const PROFILE_POSTS_LIMIT = 60;
 
 addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void> => {
-  const { shouldRefresh } = payload || {};
-  if (global.nilakFeed?.isLoading || (global.nilakFeed?.followingPosts && !shouldRefresh)) return;
+  const { shouldRefresh, isMore } = payload || {};
+  const feed = global.nilakFeed;
+  if (feed?.isLoading || (feed?.followingPosts && !shouldRefresh && !isMore)) return;
 
   global = updateNilakFeed(global, { isLoading: true });
   setGlobal(global);
@@ -36,14 +37,24 @@ addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void
   const suggestedChannels = await loadSuggestedChannels();
   global = getGlobal();
   const followingChannels = selectFollowingChannels(global);
+  // More posts continue from the oldest loaded post of each channel; a refresh starts again from the newest
+  const cursorByChatId = isMore ? { ...global.nilakFeed?.cursorByChatId } : {};
 
-  const [followingPosts, suggestedPosts] = await Promise.all([
-    fetchChannelPosts(followingChannels),
-    fetchChannelPosts(suggestedChannels),
+  const [following, suggested] = await Promise.all([
+    fetchChannelPosts(followingChannels, cursorByChatId),
+    fetchChannelPosts(suggestedChannels, cursorByChatId),
   ]);
 
   global = getGlobal();
-  global = updateNilakFeed(global, { isLoading: false, followingPosts, suggestedPosts });
+  const current = global.nilakFeed;
+  global = updateNilakFeed(global, {
+    isLoading: false,
+    followingPosts: isMore ? (current?.followingPosts || []).concat(following.posts) : following.posts,
+    suggestedPosts: isMore ? (current?.suggestedPosts || []).concat(suggested.posts) : suggested.posts,
+    albums: { ...(isMore ? current?.albums : undefined), ...following.albums, ...suggested.albums },
+    cursorByChatId,
+    hasMore: Object.values(cursorByChatId).some((cursor) => cursor !== false),
+  });
   setGlobal(global);
 });
 
@@ -189,29 +200,38 @@ function selectFollowingChannels(global: GlobalState) {
     .slice(0, FOLLOWING_CHANNELS_LIMIT);
 }
 
-async function fetchChannelPosts(channels: ApiChat[]) {
+async function fetchChannelPosts(channels: ApiChat[], cursorByChatId: Record<string, number | false>) {
   const posts: ApiMessage[] = [];
+  const albums: Record<string, ApiMessage[]> = {};
+  const pending = channels.filter((chat) => cursorByChatId[chat.id] !== false);
 
-  for (let i = 0; i < channels.length; i += FETCH_BATCH_SIZE) {
-    const batch = channels.slice(i, i + FETCH_BATCH_SIZE);
+  for (let i = 0; i < pending.length; i += FETCH_BATCH_SIZE) {
+    const batch = pending.slice(i, i + FETCH_BATCH_SIZE);
     const results = await Promise.all(batch.map((chat) => callApi('fetchMessages', {
-      chat, threadId: MAIN_THREAD_ID, limit: POSTS_PER_CHANNEL,
+      chat, threadId: MAIN_THREAD_ID, limit: POSTS_PER_CHANNEL, offsetId: cursorByChatId[chat.id] || undefined,
     })));
 
     let global = getGlobal();
     results.forEach((result, index) => {
+      const chat = batch[index];
       if (!result) return;
+
+      const { messages } = result;
+      cursorByChatId[chat.id] = messages.length < POSTS_PER_CHANNEL
+        ? false
+        : Math.min(...messages.map((message) => message.id));
 
       global = addUsers(global, buildCollectionByKey(result.users, 'id'));
       global = addChats(global, buildCollectionByKey(result.chats, 'id'));
       // Stored like any loaded history, so opening, sharing and reacting work on feed posts
-      global = addChatMessagesById(global, batch[index].id, buildCollectionByKey(result.messages, 'id'));
-      posts.push(...pickPosts(result.messages));
+      global = addChatMessagesById(global, chat.id, buildCollectionByKey(messages, 'id'));
+      posts.push(...pickPosts(messages));
+      Object.assign(albums, collectAlbums(messages));
     });
     setGlobal(global);
   }
 
-  return posts.sort((a, b) => b.date - a.date);
+  return { posts: posts.sort((a, b) => b.date - a.date), albums };
 }
 
 // One card per album: the album part with the caption, or its first part
@@ -235,6 +255,21 @@ function pickPosts(messages: ApiMessage[]) {
   });
 
   return posts.concat(Array.from(byGroup.values()));
+}
+
+// The photos and videos of each album, oldest first as the channel posted them
+function collectAlbums(messages: ApiMessage[]) {
+  const albums: Record<string, ApiMessage[]> = {};
+  messages.forEach((message) => {
+    const { groupedId } = message;
+    if (!groupedId || !(message.content.photo || message.content.video)) return;
+
+    const key = buildNilakAlbumKey(message.chatId, groupedId);
+    (albums[key] ||= []).push(message);
+  });
+  Object.values(albums).forEach((album) => album.sort((a, b) => a.id - b.id));
+
+  return albums;
 }
 
 function updateNilakFeed<T extends GlobalState>(global: T, update: Partial<NonNullable<GlobalState['nilakFeed']>>): T {

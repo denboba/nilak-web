@@ -26,6 +26,7 @@ import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 import useMediaWithLoadProgress from '../../hooks/useMediaWithLoadProgress';
 
+import NilakBarruuChatCard from '../nilak/NilakBarruuChatCard';
 import Checkbox from '../ui/Checkbox';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import File from './File';
@@ -203,6 +204,11 @@ const Document = ({
   const handleDateClick = useLastCallback(() => {
     onDateClick?.(message);
   });
+
+  // Nilak: a Barruu shows as an article card
+  if (IS_NILAK_SHELL && message && !isUploading && getIsBarruu(message)) {
+    return <NilakBarruuChatCard message={message} />;
+  }
 
   return (
     <File

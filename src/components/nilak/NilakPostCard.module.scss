@@ -191,3 +191,46 @@
 
   background: none;
 }
+
+.album {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.1875rem;
+
+  margin-top: 0.75rem;
+  border-radius: 1rem;
+}
+
+// Three parts: the first one spans the top row
+.albumOfThree .albumTile:first-child {
+  grid-column: span 2;
+}
+
+.albumTile {
+  aspect-ratio: 1;
+  margin-top: 0;
+  border-radius: 0;
+
+  .mediaImage {
+    height: 100%;
+  }
+}
+
+.albumOfThree .albumTile:first-child {
+  aspect-ratio: 2;
+}
+
+.moreCount {
+  position: absolute;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-semibold);
+  color: #fff;
+
+  background: rgba(42, 29, 64, 0.5);
+}
