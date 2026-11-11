@@ -3434,6 +3434,10 @@ export interface LangPair {
   'NilakWriterNumbered': undefined;
   'NilakWriterLinkPrompt': undefined;
   'NilakWriterCaption': undefined;
+  'NilakWriterCode': undefined;
+  'NilakWriterEmoji': undefined;
+  'NilakWriterMention': undefined;
+  'NilakWriterEmbed': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

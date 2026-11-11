@@ -1,6 +1,7 @@
 import type { BarruuInline } from './barruu';
 
 import { parseBarruu, parseBarruuInline } from './barruu';
+import { getIsNilakDocument } from './nilakDocuments';
 
 // The Barruu writer edits HTML directly (what you see is what readers get) and stores Nilak Markdown, the format
 // Nilak for Android reads and writes. These helpers convert between the two and clean pasted content.
@@ -35,12 +36,17 @@ export function markdownToEditorHtml(markdown: string, mediaUrls: Record<string,
         return `<pre>${escapeHtml(block.text)}</pre>`;
       case 'image':
       case 'video': {
-        // Media the writer no longer holds (after a reload) cannot be shown or published, so it is left out
-        const url = mediaUrls[block.path];
-        return url ? buildFigureHtml(block.path, url, block.caption, block.type === 'video') : '';
+        // Stickers and GIFs (`tgdoc:`) and web pictures load in the editor; package media the writer no longer
+        // holds (after a reload) cannot be shown or published, so it is left out
+        const { caption } = block;
+        if (getIsNilakDocument(block.path)) return buildFigureHtml(block.path, '', { caption, kind: 'document' });
+        const url = mediaUrls[block.path] || (/^https:\/\//.test(block.path) ? block.path : undefined);
+        return url
+          ? buildFigureHtml(block.path, url, { caption, kind: block.type === 'video' ? 'video' : 'photo' })
+          : '';
       }
       case 'link':
-        return `<p><a href="${escapeAttribute(block.url)}">${escapeHtml(block.url)}</a></p>`;
+        return buildEmbedHtml(block.url);
       case 'table':
         return buildTableHtml(block.rows.map((row) => row.map(inlineToHtml)));
       case 'quiz':
@@ -51,14 +57,35 @@ export function markdownToEditorHtml(markdown: string, mediaUrls: Record<string,
   }).join('') || '<p><br></p>';
 }
 
+export type FigureKind = 'photo' | 'video' | 'sticker' | 'gif' | 'document';
+
+type FigureOptions = { caption?: string; kind: FigureKind; captionPlaceholder?: string };
+
+// `document` is a sticker or GIF still loading: the writer decides which once Telegram's document is read
 export function buildFigureHtml(
-  path: string, url: string, caption = '', isVideo?: boolean, captionPlaceholder = '',
+  path: string, url: string, { caption = '', kind, captionPlaceholder = '' }: FigureOptions,
 ) {
-  const media = isVideo
-    ? `<video src="${escapeAttribute(url)}" data-path="${escapeAttribute(path)}" controls></video>`
-    : `<img src="${escapeAttribute(url)}" data-path="${escapeAttribute(path)}" alt="">`;
-  return `<figure>${media}<figcaption data-placeholder="${escapeAttribute(captionPlaceholder)}">${escapeHtml(caption)}`
-    + '</figcaption></figure><p><br></p>';
+  const source = `src="${escapeAttribute(url)}" data-path="${escapeAttribute(path)}"`;
+  const media = kind === 'video'
+    ? `<video ${source} controls></video>`
+    : kind === 'gif'
+      ? `<video ${source} autoplay loop muted playsinline></video>`
+      : `<img ${source} alt="">`;
+  const figcaption = kind === 'sticker' ? ''
+    : `<figcaption contenteditable="true" data-placeholder="${escapeAttribute(captionPlaceholder)}">`
+      + `${escapeHtml(caption)}</figcaption>`;
+
+  return `<figure data-kind="${kind}" contenteditable="false">${media}${figcaption}</figure><p><br></p>`;
+}
+
+export function buildEmbedHtml(url: string) {
+  return `<div data-block="embed" contenteditable="false"><a href="${escapeAttribute(url)}">${escapeHtml(url)}</a>`
+    + '</div><p><br></p>';
+}
+
+export function buildCustomEmojiHtml(documentId: string, alt: string, url = '') {
+  return `<img data-emoji-id="${escapeAttribute(documentId)}" alt="${escapeAttribute(alt)}"`
+    + ` src="${escapeAttribute(url)}">`;
 }
 
 export function buildTableHtml(rows: string[][] = [['Column', 'Column'], ['Cell', 'Cell']]) {
@@ -96,7 +123,7 @@ function renderInline(parts: BarruuInline[]): string {
       case 'strike': return `<s>${renderInline(part.children)}</s>`;
       case 'highlight': return `<mark>${renderInline(part.children)}</mark>`;
       case 'link': return `<a href="${escapeAttribute(part.url)}">${renderInline(part.children)}</a>`;
-      case 'customEmoji': return escapeHtml(part.alt);
+      case 'customEmoji': return buildCustomEmojiHtml(part.documentId, part.alt);
     }
 
     return '';
@@ -172,6 +199,11 @@ function appendBlock(node: Node, blocks: string[]) {
         blocks.push(quizFromNode(node));
         return;
       }
+      if (node.dataset.block === 'embed') {
+        const href = node.querySelector('a')?.getAttribute('href');
+        if (href) blocks.push(href);
+        return;
+      }
       // A plain container (pasted or created by the browser): its children are blocks of their own
       if (Array.from(node.children).some((child) => BLOCK_TAGS.has(child.tagName.toLowerCase()))) {
         Array.from(node.childNodes).forEach((child) => appendBlock(child, blocks));
@@ -210,6 +242,11 @@ function inlineFromNode(node: Node): string {
 
   switch (tag) {
     case 'br': return '\n';
+    case 'img': {
+      const { emojiId } = node.dataset;
+      const alt = (node.getAttribute('alt') || '').replace(/[[\]]/g, '');
+      return emojiId && alt ? `[${alt}](emoji:${emojiId})` : '';
+    }
     case 'strong':
     case 'b': return wrap('**');
     case 'em':

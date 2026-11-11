@@ -214,6 +214,9 @@ export type BarruuDraft = {
 // Packs a Barruu the way Nilak for Android does, so both apps open what the other writes
 export async function buildBarruuFile(draft: BarruuDraft): Promise<File> {
   const words = countWords(draft.body);
+  const usedMedia = Object.entries(draft.media).filter(([path]) => draft.body.includes(path));
+  // The first photo is the cover feeds show, as in packages from Nilak for Android
+  const cover = usedMedia.find(([, file]) => file.type.startsWith('image/'))?.[0];
   const manifest = {
     format: BARRUU_FORMAT,
     version: BARRUU_VERSION,
@@ -223,14 +226,15 @@ export async function buildBarruuFile(draft: BarruuDraft): Promise<File> {
     lang: navigator.language,
     words,
     minutes: getMinutesForWords(words),
-    created: Date.now(),
+    // In seconds, like Nilak for Android
+    created: Math.floor(Date.now() / 1000),
+    cover,
   };
 
   const files: Record<string, Uint8Array> = {
     [BARRUU_MANIFEST]: strToU8(JSON.stringify(manifest)),
     [BARRUU_BODY]: strToU8(draft.body),
   };
-  const usedMedia = Object.entries(draft.media).filter(([path]) => draft.body.includes(path));
   const mediaBytes = await Promise.all(usedMedia.map(([, file]) => file.arrayBuffer()));
   usedMedia.forEach(([path], index) => {
     files[path] = new Uint8Array(mediaBytes[index]);

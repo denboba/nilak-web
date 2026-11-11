@@ -6,10 +6,12 @@ import type { BarruuBlock, BarruuInline } from './helpers/barruu';
 import buildClassName from '../../util/buildClassName';
 import renderText from '../common/helpers/renderText';
 import { parseBarruu, parseBarruuInline } from './helpers/barruu';
+import { getIsNilakDocument } from './helpers/nilakDocuments';
 
 import CustomEmoji from '../common/CustomEmoji';
 import Icon from '../common/icons/Icon';
 import NilakQuiz from './NilakQuiz';
+import NilakTgDocument from './NilakTgDocument';
 
 import styles from './NilakReader.module.scss';
 
@@ -19,6 +21,7 @@ type OwnProps = {
 };
 
 const CUSTOM_EMOJI_SIZE = 20;
+const WEB_IMAGE = /^https:\/\/\S+\.(jpe?g|png|gif|webp)(\?\S*)?$/i;
 
 // The body of a Barruu, shared by the reader and the writer's preview so both show an article the same way
 const NilakBarruuBody = ({ markdown, mediaUrls }: OwnProps) => {
@@ -63,7 +66,12 @@ const NilakBarruuBody = ({ markdown, mediaUrls }: OwnProps) => {
   }
 
   function renderMedia(block: Extract<BarruuBlock, { path: string }>) {
-    const url = mediaUrls[block.path];
+    if (getIsNilakDocument(block.path)) {
+      return <NilakTgDocument documentRef={block.path} caption={block.caption} />;
+    }
+
+    // A picture from the web, as Nilak for Android allows
+    const url = mediaUrls[block.path] || (WEB_IMAGE.test(block.path) ? block.path : undefined);
     if (!url) {
       // Media kept outside the package (a t.me link from the article editor) opens in a new tab
       return block.path.startsWith('http') ? renderLinkCard(block.path, block.caption) : undefined;

@@ -4577,3 +4577,7 @@
 "NilakWriterNumbered" = "Numbered list";
 "NilakWriterLinkPrompt" = "Link address";
 "NilakWriterCaption" = "Add a caption";
+"NilakWriterCode" = "Code";
+"NilakWriterEmoji" = "Emoji, stickers and GIFs";
+"NilakWriterMention" = "Mention";
+"NilakWriterEmbed" = "Link card";

@@ -1,4 +1,5 @@
 import { Api as GramJs } from '../../../lib/gramjs';
+import { BinaryReader } from '../../../lib/gramjs/extensions';
 
 import type {
   ApiSticker, ApiStickerSetInfo, ApiVideo,
@@ -11,7 +12,8 @@ import { compact } from '../../../util/iteratees';
 import { buildVideoFromDocument } from '../apiBuilders/messageContent';
 import { buildApiEmojiStatus } from '../apiBuilders/peers';
 import {
-  buildApiEmojiGroup, buildStickerSet, buildStickerSetCovered, processStickerPackResult, processStickerResult,
+  buildApiEmojiGroup, buildStickerFromDocument, buildStickerSet, buildStickerSetCovered, processStickerPackResult,
+  processStickerResult,
 } from '../apiBuilders/symbols';
 import {
   buildInputDocument,
@@ -660,4 +662,43 @@ function processGifResult(gifs: GramJs.TypeDocument[]) {
       return undefined;
     })
     .filter(Boolean);
+}
+
+// Nilak keeps Telegram stickers and GIFs inside a Barruu as `tgdoc:` and the document in Telegram's binary form
+// (URL-safe Base64, no padding), the same way Nilak for Android writes them
+const NILAK_DOCUMENT_PREFIX = 'tgdoc:';
+
+export function encodeNilakDocument({ documentId }: { documentId: string }) {
+  const document = localDb.documents[documentId];
+  if (!(document instanceof GramJs.Document)) return undefined;
+
+  const bytes = document.getBytes();
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return NILAK_DOCUMENT_PREFIX + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodeNilakDocument({ ref }: { ref: string }): { sticker?: ApiSticker; gif?: ApiVideo } | undefined {
+  if (!ref.startsWith(NILAK_DOCUMENT_PREFIX)) return undefined;
+
+  try {
+    const base64 = ref.slice(NILAK_DOCUMENT_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const document = new BinaryReader(bytes).tgReadObject();
+    if (!(document instanceof GramJs.Document)) return undefined;
+
+    localDb.documents[String(document.id)] = document;
+    const sticker = buildStickerFromDocument(document);
+    if (sticker) return { sticker };
+
+    const gif = buildVideoFromDocument(document);
+    return gif ? { gif } : undefined;
+  } catch (err) {
+    // A document from a newer or broken file is shown as nothing rather than breaking the article
+    return undefined;
+  }
 }
