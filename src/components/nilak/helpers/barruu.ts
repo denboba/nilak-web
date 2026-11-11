@@ -4,6 +4,8 @@ import {
 
 import type { ApiFormattedText, ApiMessage } from '../../../api/types';
 
+import { getRichMessagePreviewText, getRichTextPlainText } from '../../../global/helpers/richMessage';
+
 // A Barruu is the Nilak article format shared with Nilak for Android (`TigiArticle.java`): a zip named
 // `<slug>.nilak` holding `manifest.json`, `article.md` in Nilak Markdown and a `media/` folder. The caption carries
 // the title, the subtitle and a "📖 N min read" line, so lists show them before the file is downloaded.
@@ -63,7 +65,8 @@ export function getIsBarruu(message: ApiMessage) {
 }
 
 export function getIsReadPost(message: ApiMessage) {
-  if (getIsBarruu(message)) return true;
+  // Barruu and Telegram's own articles are always reads
+  if (getIsBarruu(message) || message.content.richMessage) return true;
   // Long posts count with or without a photo or video, like in Nilak for Android; other files do not
   const { document, video } = message.content;
   if (document || video?.isRound) return false;
@@ -101,19 +104,27 @@ const EXCERPT_LENGTH = 220;
 export function getReadPreview(message: ApiMessage) {
   const isBarruu = getIsBarruu(message);
   const title = getReadTitle(message);
-  const text = message.content.text?.text.trim() || '';
+  const { richMessage } = message.content;
+  const text = (richMessage ? getRichMessagePreviewText(richMessage) : message.content.text?.text || '').trim();
   const excerpt = isBarruu
     ? getBarruuSubtitle(message)
     : text.slice(title.replace(/…$/, '').length, title.length + EXCERPT_LENGTH).trim();
 
   return {
-    isBarruu, title, excerpt, minutes: getReadMinutes(message),
+    isBarruu, isArticle: Boolean(richMessage), title, excerpt, minutes: getReadMinutes(message),
   };
 }
 
 // The title shown in lists: a Barruu's title, else the first line of a long post
 export function getReadTitle(message: ApiMessage) {
   if (getIsBarruu(message)) return getBarruuTitle(message);
+
+  const { richMessage } = message.content;
+  if (richMessage) {
+    const titleBlock = richMessage.blocks.find((block) => block.type === 'title' || block.type === 'header');
+    const title = titleBlock && 'text' in titleBlock ? getRichTextPlainText(titleBlock.text) : '';
+    return shortenTitle((title || getRichMessagePreviewText(richMessage, MAX_LIST_TITLE_LENGTH)).trim());
+  }
 
   return shortenTitle((message.content.text?.text || '').trim().split('\n', 1)[0]);
 }
@@ -143,7 +154,8 @@ export function getBarruuSubtitle(message: ApiMessage) {
 }
 
 export function getReadMinutes(message: ApiMessage) {
-  const text = message.content.text?.text || '';
+  const { richMessage } = message.content;
+  const text = richMessage ? getRichMessagePreviewText(richMessage) : message.content.text?.text || '';
   if (getIsBarruu(message)) {
     const markIndex = text.lastIndexOf(MINUTES_MARK);
     const match = markIndex >= 0 ? text.slice(markIndex).match(/\d+/) : undefined;

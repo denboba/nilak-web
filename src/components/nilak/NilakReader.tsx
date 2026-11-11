@@ -4,11 +4,12 @@ import {
 import { withGlobal } from '../../global';
 
 import type { ApiChat, ApiMessage } from '../../api/types';
+import type { ThemeKey } from '../../types';
 import type { BarruuPackage } from './helpers/barruu';
 import { ApiMediaFormat } from '../../api/types';
 
 import { getDocumentMediaHash } from '../../global/helpers';
-import { selectChat, selectChatMessage } from '../../global/selectors';
+import { selectChat, selectChatMessage, selectTheme } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import * as mediaLoader from '../../util/mediaLoader';
 import { throttle } from '../../util/schedulers';
@@ -17,7 +18,7 @@ import { renderTextWithEntities } from '../common/helpers/renderTextWithEntities
 import {
   getBarruuSubtitle, getBarruuTitle, getIsBarruu, getReadMinutes, readBarruuPackage, splitLongPost,
 } from './helpers/barruu';
-import { setOpenedRead } from './helpers/nilakTab';
+import { setNilakTab, setOpenedRead } from './helpers/nilakTab';
 import { getReadingProgress, saveReadingProgress } from './helpers/readingProgress';
 
 import useLang from '../../hooks/useLang';
@@ -25,6 +26,7 @@ import useLastCallback from '../../hooks/useLastCallback';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import MessageRichText from '../common/MessageRichText';
 import Loading from '../ui/Loading';
 import NilakBarruuBody from './NilakBarruuBody';
 import NilakMediaTile from './NilakMediaTile';
@@ -41,12 +43,16 @@ type OwnProps = {
 type StateProps = {
   chat?: ApiChat;
   message?: ApiMessage;
+  theme: ThemeKey;
 };
 
 const PROGRESS_SAVE_INTERVAL = 1000;
+const TELEGRAM_LINK = /^(https?:\/\/)?(t\.me|telegram\.me)\/|^tg:/i;
 const FULL_PERCENT = 100;
 
-const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps) => {
+const NilakReader = ({
+  chatId, messageId, chat, message, theme,
+}: OwnProps & StateProps) => {
   const lang = useLang();
   const scrollRef = useRef<HTMLDivElement>();
   const [barruu, setBarruu] = useState<BarruuPackage | undefined>();
@@ -110,6 +116,16 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
     setOpenedRead(undefined);
   });
 
+  // A Telegram link (a channel, a post, a person) opens in Chats, so the reader steps aside
+  const handleLinkClick = useLastCallback((e: React.MouseEvent<HTMLElement>) => {
+    const link = (e.target as HTMLElement).closest('a');
+    const href = link?.getAttribute('href') || '';
+    if (!TELEGRAM_LINK.test(href)) return;
+
+    setOpenedRead(undefined);
+    setNilakTab('chats');
+  });
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') handleClose();
@@ -121,6 +137,9 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
 
   function renderBody() {
     if (!message) return undefined;
+
+    // Telegram's own articles keep Telegram's look
+    if (message.content.richMessage) return <MessageRichText message={message} theme={theme} />;
 
     if (!isBarruu) {
       return longPost && (
@@ -142,8 +161,8 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
   const minutes = message ? getReadMinutes(message) : 0;
   const subtitle = message && isBarruu ? getBarruuSubtitle(message) : undefined;
   const longPost = useMemo(() => (
-    message?.content.text && !isBarruu ? splitLongPost(message.content.text) : undefined
-  ), [message?.content.text, isBarruu]);
+    message?.content.text && !isBarruu && !message.content.richMessage ? splitLongPost(message.content.text) : undefined
+  ), [message?.content.text, message?.content.richMessage, isBarruu]);
 
   return (
     <div className={styles.root} role="dialog" aria-modal>
@@ -161,7 +180,7 @@ const NilakReader = ({ chatId, messageId, chat, message }: OwnProps & StateProps
         )}
       </header>
       <div ref={scrollRef} className={buildClassName(styles.scroll, 'custom-scroll')} onScroll={handleScroll}>
-        <article className={styles.article} dir="auto">
+        <article className={styles.article} dir="auto" onClickCapture={handleLinkClick}>
           {message && isBarruu && (
             <>
               <span className={styles.tag}>✿ BARRUU</span>
@@ -189,6 +208,7 @@ function revokeMedia(barruu: BarruuPackage) {
 export default memo(withGlobal<OwnProps>(
   (global, { chatId, messageId, fallbackMessage }): Complete<StateProps> => ({
     chat: selectChat(global, chatId),
+    theme: selectTheme(global),
     message: selectChatMessage(global, chatId, messageId) || fallbackMessage,
   }),
 )(NilakReader));

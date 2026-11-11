@@ -3427,6 +3427,7 @@ export interface LangPair {
   'NilakReelNotInterested': undefined;
   'NilakBarruuPublished': undefined;
   'NilakWriteBarruu': undefined;
+  'NilakArticle': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

@@ -29,7 +29,7 @@ type StateProps = {
 const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
   const lang = useLang();
   const {
-    isBarruu, title, excerpt, minutes,
+    isBarruu, isArticle, title, excerpt, minutes,
   } = getReadPreview(post);
   const coverUrl = useReadCover(post);
 
@@ -52,6 +52,7 @@ const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
         {excerpt && <p className={styles.rowExcerpt} dir="auto">{renderText(excerpt)}</p>}
         <div className={styles.rowMeta}>
           {isBarruu && <span className={styles.rowBarruu}>✿ Barruu</span>}
+          {isArticle && <span className={styles.rowBarruu}>{lang('NilakArticle')}</span>}
           {Boolean(minutes) && <span>{lang('NilakReadMinutes', { count: minutes }, { pluralValue: minutes })}</span>}
         </div>
       </div>
