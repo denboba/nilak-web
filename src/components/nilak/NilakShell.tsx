@@ -160,7 +160,9 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
               </button>
             </div>
           )}
-          {tab !== 'reels' && <img className={styles.sprig} src={nilakSprig} alt="" aria-hidden draggable={false} />}
+          {tab !== 'reels' && tab !== 'home' && (
+            <img className={styles.sprig} src={nilakSprig} alt="" aria-hidden draggable={false} />
+          )}
           <div className={styles.pageContent}>{renderPage()}</div>
         </div>
       )}

@@ -8,6 +8,7 @@ import type { ApiMessage } from '../../api/types';
 import { GLOBAL_SUGGESTED_CHANNELS_ID } from '../../config';
 import { selectSimilarChannelIds } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import { buildPostKey, getNotInterestedKeys, markNotInterested } from './helpers/feedPrefs';
 
 import useFlag from '../../hooks/useFlag';
 import useLang from '../../hooks/useLang';
@@ -37,19 +38,34 @@ const NilakReels = ({ isLoading, posts, suggestedChannelIds }: StateProps) => {
   const scrollRef = useRef<HTMLDivElement>();
   const [mode, setMode] = useState<ReelsMode>('forYou');
   const [activeIndex, setActiveIndex] = useState(0);
-  // Browsers only autoplay muted video; the first tap on the sound button turns it on for every reel
-  const [isMuted, , toggleMute] = useFlag(true);
+  // Reels start with sound; it is turned off only if the browser refuses sound before the first tap
+  const [isMuted, muteSound, unmuteSound] = useFlag(false);
+  const [hiddenKeys, setHiddenKeys] = useState(getNotInterestedKeys);
+
+  const toggleMute = useLastCallback(() => {
+    if (isMuted) {
+      unmuteSound();
+    } else {
+      muteSound();
+    }
+  });
+
+  const handleNotInterested = useLastCallback((post: ApiMessage) => {
+    markNotInterested(post.chatId, post.id);
+    setHiddenKeys(getNotInterestedKeys());
+  });
 
   useEffect(() => {
     loadNilakReels();
   }, []);
 
   const reels = useMemo(() => {
-    if (mode === 'forYou' || !suggestedChannelIds) return posts || [];
+    const visible = (posts || []).filter((post) => !hiddenKeys.has(buildPostKey(post.chatId, post.id)));
+    if (mode === 'forYou' || !suggestedChannelIds) return visible;
 
     const suggested = new Set(suggestedChannelIds);
-    return (posts || []).filter((post) => !suggested.has(post.chatId));
-  }, [mode, posts, suggestedChannelIds]);
+    return visible.filter((post) => !suggested.has(post.chatId));
+  }, [mode, posts, suggestedChannelIds, hiddenKeys]);
 
   useEffect(() => {
     if (reels.length && activeIndex >= reels.length - LOAD_MORE_THRESHOLD) {
@@ -91,7 +107,14 @@ const NilakReels = ({ isLoading, posts, suggestedChannelIds }: StateProps) => {
         {reels.map((post, index) => (
           <div key={`${post.chatId}-${post.id}`} className={styles.slot}>
             {Math.abs(index - activeIndex) <= MOUNTED_DISTANCE && (
-              <NilakReel post={post} isActive={index === activeIndex} isMuted={isMuted} onToggleMute={toggleMute} />
+              <NilakReel
+                post={post}
+                isActive={index === activeIndex}
+                isMuted={isMuted}
+                onToggleMute={toggleMute}
+                onSoundBlocked={muteSound}
+                onNotInterested={handleNotInterested}
+              />
             )}
           </div>
         ))}

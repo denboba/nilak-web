@@ -207,3 +207,62 @@
 .preview {
   padding-top: 1.5rem;
 }
+
+// Phones: the editor or the preview, switched by the Preview button
+.split .preview {
+  display: none;
+}
+
+.splitPreview {
+  .editor {
+    display: none;
+  }
+
+  .preview {
+    display: block;
+  }
+}
+
+// Wide screens: editor and live preview side by side, so formatting shows while typing
+@media (min-width: 1100px) {
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+
+    .editor,
+    .preview {
+      display: flex;
+    }
+
+    .editor {
+      max-width: none;
+      margin: 0;
+      padding-right: 2rem;
+      padding-left: 2rem;
+    }
+
+    .preview {
+      position: sticky;
+      top: 3.75rem;
+
+      overflow-y: auto;
+      display: block;
+
+      max-height: calc(100vh - 3.75rem);
+      margin: 0;
+      padding: 1.5rem 2rem 4rem;
+      border-left: 0.0625rem solid var(--color-borders);
+
+      background: var(--color-background-secondary);
+    }
+  }
+
+  .previewToggle {
+    display: none;
+  }
+}
+
+.fileInput {
+  display: none;
+}

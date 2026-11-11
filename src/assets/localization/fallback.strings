@@ -4561,3 +4561,10 @@
 "NilakWriterDivider" = "Divider";
 "NilakWriterPhoto" = "Photo or video";
 "NilakReadPercent" = "{percent}% read";
+"NilakReelMore" = "More";
+"NilakReelSave" = "Save to Saved Messages";
+"NilakReelCopyLink" = "Copy link";
+"NilakReelDownload" = "Download";
+"NilakReelSpeed" = "Speed {speed}×";
+"NilakReelOpenInChat" = "Open in chat";
+"NilakReelNotInterested" = "Not interested";

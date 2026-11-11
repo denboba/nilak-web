@@ -167,7 +167,7 @@ const NilakBarruuWriter = ({ channel, onClose }: OwnProps) => {
         <span className={styles.writerTitle}>{lang('NilakCreateBarruu')}</span>
         <button
           type="button"
-          className={buildClassName(styles.secondary, isPreview && styles.secondaryActive)}
+          className={buildClassName(styles.secondary, styles.previewToggle, isPreview && styles.secondaryActive)}
           onClick={() => setIsPreview(!isPreview)}
         >
           <Icon name="eye" />
@@ -179,14 +179,8 @@ const NilakBarruuWriter = ({ channel, onClose }: OwnProps) => {
         </button>
       </div>
 
-      {isPreview ? (
-        <article className={buildClassName(readerStyles.article, styles.preview)} dir="auto">
-          <span className={readerStyles.tag}>✿ BARRUU</span>
-          <h1 className={readerStyles.title}>{draft.title || lang('NilakWriterTitle')}</h1>
-          {draft.subtitle && <p className={readerStyles.subtitle}>{draft.subtitle}</p>}
-          <NilakBarruuBody markdown={draft.body} mediaUrls={mediaUrls} />
-        </article>
-      ) : (
+      {/* Wide screens show the article beside the editor, updated as the writer types */}
+      <div className={buildClassName(styles.split, isPreview && styles.splitPreview)}>
         <div className={styles.editor}>
           <input
             className={styles.titleInput}
@@ -244,7 +238,13 @@ const NilakBarruuWriter = ({ channel, onClose }: OwnProps) => {
             onChange={handleMediaSelect}
           />
         </div>
-      )}
+        <article className={buildClassName(readerStyles.article, styles.preview)} dir="auto" aria-live="polite">
+          <span className={readerStyles.tag}>✿ BARRUU</span>
+          <h1 className={readerStyles.title}>{draft.title || lang('NilakWriterTitle')}</h1>
+          {draft.subtitle && <p className={readerStyles.subtitle}>{draft.subtitle}</p>}
+          <NilakBarruuBody markdown={draft.body} mediaUrls={mediaUrls} />
+        </article>
+      </div>
     </div>
   );
 };

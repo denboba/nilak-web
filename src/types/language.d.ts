@@ -3419,6 +3419,12 @@ export interface LangPair {
   'NilakWriterTable': undefined;
   'NilakWriterDivider': undefined;
   'NilakWriterPhoto': undefined;
+  'NilakReelMore': undefined;
+  'NilakReelSave': undefined;
+  'NilakReelCopyLink': undefined;
+  'NilakReelDownload': undefined;
+  'NilakReelOpenInChat': undefined;
+  'NilakReelNotInterested': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5675,6 +5681,9 @@ export interface LangPairWithVariables<V = LangVariable> {
   'NilakReadPercent': {
     'percent': V;
   };
+  'NilakReelSpeed': {
+    'speed': V;
+  };
 }
 
 export interface LangPairPlural {
@@ -7916,6 +7925,11 @@ export interface LangKeyGroups {
     keys:
       | 'PeerPickerUnknownPeer';
     variables: 'id';
+  };
+  'speed': {
+    keys:
+      | 'NilakReelSpeed';
+    variables: 'speed';
   };
 }
 
