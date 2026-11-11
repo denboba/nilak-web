@@ -1,14 +1,32 @@
-// Nilak Web on Cloudflare Workers: `wrangler deploy` builds the site, then serves `dist` as static files
+// Nilak Web on Cloudflare Workers: `wrangler deploy` builds the site, then serves `dist` as static files.
+// Requests to `/bot/*` run `bot/worker.ts`, the @NilakAppBot webhook; its token is the NILAK_BOT_TOKEN secret.
 // Cloudflare build settings: deploy command `npx wrangler deploy`; build variables TELEGRAM_API_ID, TELEGRAM_API_HASH,
 // APP_NAME=Nilak
 {
   "name": "nilak-web",
+  "main": "bot/worker.ts",
   "compatibility_date": "2025-10-01",
   "build": {
     "command": "bash deploy/cloudflare-build.sh"
   },
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/bot/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nilak-bots",
+      "database_id": "992fc73e-d46a-418c-8981-d5af0e9210c5"
+    }
+  ],
+  // Scheduled posts go out within 5 minutes of their time
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "observability": {
+    "enabled": true
   }
 }

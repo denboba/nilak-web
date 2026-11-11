@@ -16,6 +16,7 @@
     "*.config.js",
     ".github/workflows/*.js",
     "deploy/*.js",
+    "bot",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
     "src/lib/gramjs/tl/generateModules.ts",
