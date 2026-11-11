@@ -5,12 +5,13 @@ import { getActions, getGlobal } from '../../global';
 
 import type { ApiChat } from '../../api/types';
 import type { IconName } from '../../types/icons';
+import { MAIN_THREAD_ID } from '../../api/types';
 
 import { getUserFullName } from '../../global/helpers';
 import { selectUser } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import buildAttachment from '../middle/composer/helpers/buildAttachment';
 import { buildBarruuCaption, buildBarruuFile } from './helpers/barruu';
-import { setNilakTab } from './helpers/nilakTab';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -24,6 +25,7 @@ import readerStyles from './NilakReader.module.scss';
 type OwnProps = {
   channel: ApiChat;
   onClose: NoneToVoidFunction;
+  onPublished: NoneToVoidFunction;
 };
 
 type Snippet = { icon: IconName; labelKey: 'NilakWriterHeading' | 'NilakWriterBold' | 'NilakWriterItalic'
@@ -57,8 +59,8 @@ const IMAGE_ACCEPT = 'image/*,video/*';
 
 type TextDraft = { title: string; subtitle: string; body: string };
 
-const NilakBarruuWriter = ({ channel, onClose }: OwnProps) => {
-  const { openChatWithDraft } = getActions();
+const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
+  const { sendMessage, showNotification } = getActions();
   const lang = useLang();
   const bodyRef = useRef<HTMLTextAreaElement>();
   const fileInputRef = useRef<HTMLInputElement>();
@@ -153,9 +155,15 @@ const NilakBarruuWriter = ({ channel, onClose }: OwnProps) => {
     } catch (err) {
       // Nothing to do when storage is unavailable
     }
-    setNilakTab('chats');
-    openChatWithDraft({ chatId: channel.id, text: { text: buildBarruuCaption(barruuDraft) }, files: [file] });
-    onClose();
+    // Published straight to the channel, like any file sent from the composer
+    const attachment = await buildAttachment(file.name, file);
+    sendMessage({
+      messageList: { chatId: channel.id, threadId: MAIN_THREAD_ID, type: 'thread' },
+      text: buildBarruuCaption(barruuDraft),
+      attachments: [attachment],
+    });
+    showNotification({ message: { key: 'NilakBarruuPublished' } });
+    onPublished();
   });
 
   return (

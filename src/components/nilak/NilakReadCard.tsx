@@ -3,20 +3,15 @@ import { withGlobal } from '../../global';
 
 import type { ApiChat, ApiMessage } from '../../api/types';
 
-import {
-  getMessagePhoto, getMessageVideo, getPhotoMediaHash, getVideoMediaHash,
-} from '../../global/helpers';
 import { selectChat } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import renderText from '../common/helpers/renderText';
-import {
-  getBarruuSubtitle, getIsBarruu, getReadMinutes, getReadTitle,
-} from './helpers/barruu';
+import { getReadPreview } from './helpers/barruu';
 import { openNilakRead } from './helpers/nilakTab';
+import useReadCover from './helpers/useReadCover';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
-import useMedia from '../../hooks/useMedia';
 
 import Avatar from '../common/Avatar';
 
@@ -32,26 +27,15 @@ type StateProps = {
   chat?: ApiChat;
 };
 
-const EXCERPT_LENGTH = 220;
-
-// A Barruu or long post in a list: its photo on top, a short title, the first lines and the reading time
+// A Barruu inside a Home post: its picture or a lilac banner, the title, the first lines and the reading time
 const NilakReadCard = ({
   post, progress, noChannel, chat,
 }: OwnProps & StateProps) => {
   const lang = useLang();
-  const isBarruu = getIsBarruu(post);
-  const text = post.content.text?.text.trim() || '';
-  const title = getReadTitle(post);
-  const excerpt = isBarruu
-    ? getBarruuSubtitle(post)
-    : text.slice(title.replace(/…$/, '').length, title.length + EXCERPT_LENGTH).trim();
-  const minutes = getReadMinutes(post);
-
-  const photo = getMessagePhoto(post);
-  const video = getMessageVideo(post);
-  const coverHash = photo ? getPhotoMediaHash(photo, 'inline')
-    : video ? getVideoMediaHash(video, 'pictogram') : undefined;
-  const coverUrl = useMedia(coverHash) || (photo || video)?.thumbnail?.dataUri;
+  const {
+    isBarruu, title, excerpt, minutes,
+  } = getReadPreview(post);
+  const coverUrl = useReadCover(post);
 
   const handleOpen = useLastCallback(() => {
     openNilakRead(post);

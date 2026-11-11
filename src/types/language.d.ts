@@ -3425,6 +3425,8 @@ export interface LangPair {
   'NilakReelDownload': undefined;
   'NilakReelOpenInChat': undefined;
   'NilakReelNotInterested': undefined;
+  'NilakBarruuPublished': undefined;
+  'NilakWriteBarruu': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

@@ -95,6 +95,22 @@ export function getBarruuTitle(message: ApiMessage) {
   return base.replace(/[-_]/g, ' ');
 }
 
+const EXCERPT_LENGTH = 220;
+
+// What lists show of a Barruu or long post: a short title, the next lines and the reading time
+export function getReadPreview(message: ApiMessage) {
+  const isBarruu = getIsBarruu(message);
+  const title = getReadTitle(message);
+  const text = message.content.text?.text.trim() || '';
+  const excerpt = isBarruu
+    ? getBarruuSubtitle(message)
+    : text.slice(title.replace(/…$/, '').length, title.length + EXCERPT_LENGTH).trim();
+
+  return {
+    isBarruu, title, excerpt, minutes: getReadMinutes(message),
+  };
+}
+
 // The title shown in lists: a Barruu's title, else the first line of a long post
 export function getReadTitle(message: ApiMessage) {
   if (getIsBarruu(message)) return getBarruuTitle(message);

@@ -14,6 +14,9 @@ import NilakBarruuWriter from './NilakBarruuWriter';
 
 import styles from './NilakCreate.module.scss';
 
+// Time for the upload to finish before Read is loaded again
+const FEED_REFRESH_DELAY = 8000;
+
 type OwnProps = {
   // The chat whose attach menu opened the writer; none means the person's own channel
   chatId?: string;
@@ -25,11 +28,22 @@ type StateProps = {
 
 // The Barruu writer for a chat or the person's channel, or how to choose that channel
 const NilakCreate = ({ chatId, channel }: OwnProps & StateProps) => {
-  const { openLeftColumnContent, openSettingsScreen } = getActions();
+  const { openLeftColumnContent, openSettingsScreen, loadNilakFeed } = getActions();
   const lang = useLang();
 
   const handleClose = useLastCallback(() => {
     setNilakTab(chatId ? 'chats' : 'home');
+  });
+
+  // A Barruu from a chat goes back to that chat; one from Read or Create shows up in Read once it is uploaded
+  const handlePublished = useLastCallback(() => {
+    if (chatId) {
+      setNilakTab('chats');
+      return;
+    }
+
+    setNilakTab('read');
+    setTimeout(() => loadNilakFeed({ shouldRefresh: true }), FEED_REFRESH_DELAY);
   });
 
   const handleCreateChannel = useLastCallback(() => {
@@ -43,7 +57,7 @@ const NilakCreate = ({ chatId, channel }: OwnProps & StateProps) => {
     openSettingsScreen({ screen: SettingsScreens.EditProfile });
   });
 
-  if (channel) return <NilakBarruuWriter channel={channel} onClose={handleClose} />;
+  if (channel) return <NilakBarruuWriter channel={channel} onClose={handleClose} onPublished={handlePublished} />;
 
   return (
     <div className={styles.root}>

@@ -4568,3 +4568,5 @@
 "NilakReelSpeed" = "Speed {speed}×";
 "NilakReelOpenInChat" = "Open in chat";
 "NilakReelNotInterested" = "Not interested";
+"NilakBarruuPublished" = "Your Barruu is being published. It will appear in Read in a moment.";
+"NilakWriteBarruu" = "Write a Barruu";
