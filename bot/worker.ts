@@ -44,6 +44,7 @@ type TgChatMemberUpdated = {
 type TgCallbackQuery = { id: string; from: TgUser; message?: TgMessage; data?: string };
 type TgUpdate = {
   message?: TgMessage;
+  channel_post?: TgMessage;
   my_chat_member?: TgChatMemberUpdated;
   callback_query?: TgCallbackQuery;
 };
@@ -116,6 +117,8 @@ export default {
 async function handleUpdate(env: Env, update: TgUpdate) {
   if (update.my_chat_member) {
     await handleMembership(env, update.my_chat_member);
+  } else if (update.channel_post) {
+    await handleChannelPost(env, update.channel_post);
   } else if (update.callback_query) {
     await handleCallback(env, update.callback_query);
   } else if (update.message?.chat.type === 'private' && !update.message.from?.is_bot) {
@@ -229,12 +232,7 @@ async function handleMembership(env: Env, update: TgChatMemberUpdated) {
   if (chat.type !== 'channel') return;
 
   if (member.status === 'administrator') {
-    await env.DB.prepare(
-      'INSERT OR REPLACE INTO channels (chat_id, owner_id, title, username, added_at) VALUES (?, ?, ?, ?, ?)',
-      // D1 stores SQL NULL only from `null`
-      // eslint-disable-next-line no-null/no-null
-    ).bind(chat.id, from.id, chat.title || '', chat.username || null, Math.floor(Date.now() / 1000)).run();
-    await sendText(env, from.id, `Connected to “${chat.title}”. Send me any post to publish or schedule it there.`);
+    await connectChannel(env, chat, from.id);
     return;
   }
 
@@ -243,6 +241,38 @@ async function handleMembership(env: Env, update: TgChatMemberUpdated) {
     env.DB.prepare('UPDATE scheduled SET status = \'cancelled\' WHERE target_chat_id = ? AND status = \'waiting\'')
       .bind(chat.id),
   ]);
+}
+
+// "/start@NilakAppBot" posted in a channel connects it too, for when the bot was added before it was set up
+async function handleChannelPost(env: Env, post: TgMessage) {
+  const command = post.text?.trim().toLowerCase();
+  if (!command?.startsWith('/') || !command.includes(`@${BOT_USERNAME.toLowerCase()}`)) return;
+
+  await callTelegram(env, 'deleteMessage', { chat_id: post.chat.id, message_id: post.message_id });
+  await connectChannel(env, post.chat);
+}
+
+// A channel belongs to every person who can post in it, so any of its admins can publish through the bot
+async function connectChannel(env: Env, chat: TgChat, addedBy?: number) {
+  const admins = await requestTelegram<{ user: TgUser; status: string; can_post_messages?: boolean }[]>(
+    env, 'getChatAdministrators', { chat_id: chat.id },
+  );
+  const ownerIds = new Set((admins.result || [])
+    .filter(({ user, status, can_post_messages: canPost }) => !user.is_bot && (status === 'creator' || canPost))
+    .map(({ user }) => user.id));
+  if (addedBy) ownerIds.add(addedBy);
+
+  const now = Math.floor(Date.now() / 1000);
+  await env.DB.batch(Array.from(ownerIds, (ownerId) => env.DB.prepare(
+    'INSERT OR REPLACE INTO channels (chat_id, owner_id, title, username, added_at) VALUES (?, ?, ?, ?, ?)',
+    // D1 stores SQL NULL only from `null`
+    // eslint-disable-next-line no-null/no-null
+  ).bind(chat.id, ownerId, chat.title || '', chat.username || null, now)));
+
+  // Only people who have started the bot can get this message; the others see the channel in /channels
+  await Promise.all(Array.from(ownerIds, (ownerId) => sendText(
+    env, ownerId, `Connected to “${chat.title}”. Send me any post to publish or schedule it there.`,
+  )));
 }
 
 async function sendDuePosts(env: Env) {
@@ -328,7 +358,7 @@ async function setup(env: Env, origin: string) {
     requestTelegram(env, 'setWebhook', {
       url: `${origin}${WEBHOOK_PATH}`,
       secret_token: await getWebhookSecret(env),
-      allowed_updates: ['message', 'callback_query', 'my_chat_member'],
+      allowed_updates: ['message', 'channel_post', 'callback_query', 'my_chat_member'],
     }),
     requestTelegram(env, 'setMyCommands', {
       commands: [
@@ -373,21 +403,21 @@ async function callTelegram(env: Env, method: string, body: Record<string, unkno
   return (await requestTelegram(env, method, body)).ok;
 }
 
-async function requestTelegram(env: Env, method: string, body: Record<string, unknown>) {
+async function requestTelegram<T = unknown>(env: Env, method: string, body: Record<string, unknown>) {
   try {
     const response = await fetch(`https://api.telegram.org/bot${env.NILAK_BOT_TOKEN}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const result = await response.json() as { ok: boolean; description?: string };
+    const answer = await response.json() as { ok: boolean; description?: string; result?: T };
     // eslint-disable-next-line no-console
-    if (!result.ok) console.error(method, result.description);
-    return { ok: result.ok, description: result.description };
+    if (!answer.ok) console.error(method, answer.description);
+    return { ok: answer.ok, description: answer.description, result: answer.result };
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(method, err);
-    return { ok: false, description: String(err) };
+    return { ok: false, description: String(err), result: undefined };
   }
 }
 
