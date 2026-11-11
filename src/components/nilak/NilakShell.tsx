@@ -15,7 +15,6 @@ import useLastCallback from '../../hooks/useLastCallback';
 
 import NilakCreate from './NilakCreate';
 import NilakHome from './NilakHome';
-import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
 import NilakReels from './NilakReels';
@@ -54,11 +53,22 @@ const NAV_ITEMS: NavItem[] = [
 const PLUS_PATH = 'M12 5v14M5 12h14';
 
 const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
-  const { openChat } = getActions();
+  const { openChat, openChatWithInfo } = getActions();
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
   const barruuChatId = useDerivedState(getBarruuChatId);
+
+  // Profile opens Telegram's own profile of the person, beside their Saved Messages
+  const handleNavigate = useLastCallback((itemTab: NilakTab) => {
+    if (itemTab !== 'profile') {
+      setNilakTab(itemTab);
+      return;
+    }
+
+    setNilakTab('chats');
+    openChatWithInfo({ id: getGlobal().currentUserId!, shouldReplaceHistory: true, isOwnProfile: true });
+  });
 
   // Create opens the person's channel to post as in Telegram; without one, the Create page explains how to set it
   const handleCreate = useLastCallback(() => {
@@ -88,7 +98,6 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
     if (tab === 'read') return <NilakRead />;
     if (tab === 'reels') return <NilakReels />;
-    if (tab === 'profile') return <NilakProfile isNarrow={isNarrow} />;
     if (tab === 'create') return <NilakCreate chatId={barruuChatId} />;
 
     return undefined;
@@ -113,7 +122,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
               key={itemTab}
               type="button"
               className={buildClassName(styles.item, tab === itemTab && styles.active)}
-              onClick={() => setNilakTab(itemTab)}
+              onClick={() => handleNavigate(itemTab)}
             >
               {renderIcon(path)}
               <span className={styles.label}>{lang(langKey)}</span>
@@ -155,7 +164,13 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
           <div className={styles.pageContent}>{renderPage()}</div>
         </div>
       )}
-      {openedRead && <NilakReader chatId={openedRead.chatId} messageId={openedRead.messageId} />}
+      {openedRead && (
+        <NilakReader
+          chatId={openedRead.chatId}
+          messageId={openedRead.messageId}
+          fallbackMessage={openedRead.message}
+        />
+      )}
     </>
   );
 };

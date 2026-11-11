@@ -469,7 +469,6 @@ export interface ActionPayloads {
     shouldRefresh?: true;
     isMore?: true;
   } | undefined;
-  loadNilakProfile: undefined;
   loadNilakReels: {
     isMore?: true;
   } | undefined;

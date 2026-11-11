@@ -4,7 +4,7 @@ import type { ApiMessage } from '../../api/types';
 
 import renderText from '../common/helpers/renderText';
 import { getBarruuTitle, getReadMinutes } from './helpers/barruu';
-import { setOpenedRead } from './helpers/nilakTab';
+import { openNilakRead } from './helpers/nilakTab';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -21,7 +21,7 @@ const NilakBarruuChatCard = ({ message }: OwnProps) => {
   const minutes = getReadMinutes(message);
 
   const handleOpen = useLastCallback(() => {
-    setOpenedRead({ chatId: message.chatId, messageId: message.id });
+    openNilakRead(message);
   });
 
   return (

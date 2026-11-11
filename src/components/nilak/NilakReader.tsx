@@ -34,6 +34,8 @@ import styles from './NilakReader.module.scss';
 type OwnProps = {
   chatId: string;
   messageId: number;
+  // The post as it was opened, used when the message store no longer holds it
+  fallbackMessage?: ApiMessage;
 };
 
 type StateProps = {
@@ -185,8 +187,8 @@ function revokeMedia(barruu: BarruuPackage) {
 }
 
 export default memo(withGlobal<OwnProps>(
-  (global, { chatId, messageId }): Complete<StateProps> => ({
+  (global, { chatId, messageId, fallbackMessage }): Complete<StateProps> => ({
     chat: selectChat(global, chatId),
-    message: selectChatMessage(global, chatId, messageId),
+    message: selectChatMessage(global, chatId, messageId) || fallbackMessage,
   }),
 )(NilakReader));

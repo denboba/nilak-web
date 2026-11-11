@@ -72,6 +72,19 @@ export function getIsReadPost(message: ApiMessage) {
   return text.length >= LONG_POST_LENGTH || text.includes('telegra.ph/') || text.includes(READ_TAG);
 }
 
+const TELEGRAPH_URL = /https?:\/\/telegra\.ph\/[^\s)]+/;
+
+// A short post that only points to a telegra.ph article: the article itself opens in Telegram's Instant View
+export function getTelegraphArticleUrl(message: ApiMessage) {
+  const text = message.content.text;
+  if (!text || getIsBarruu(message) || text.text.length >= LONG_POST_LENGTH) return undefined;
+
+  const linkUrl = text.entities?.map((entity) => ('url' in entity ? entity.url : undefined))
+    .find((url) => url && TELEGRAPH_URL.test(url));
+
+  return linkUrl || text.text.match(TELEGRAPH_URL)?.[0];
+}
+
 export function getBarruuTitle(message: ApiMessage) {
   const caption = message.content.text?.text.trim();
   const firstLine = caption?.split('\n', 1)[0].trim();

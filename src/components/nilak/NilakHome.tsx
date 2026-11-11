@@ -10,7 +10,7 @@ import { selectSimilarChannelIds } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import renderText from '../common/helpers/renderText';
 import { getIsReadPost, getReadTitle } from './helpers/barruu';
-import { getOpenedRead, setOpenedRead } from './helpers/nilakTab';
+import { getOpenedRead, openNilakRead } from './helpers/nilakTab';
 import { getReadingProgress } from './helpers/readingProgress';
 
 import useDerivedState from '../../hooks/useDerivedState';
@@ -182,7 +182,7 @@ const NilakHome = ({
                   key={`${post.chatId}-${post.id}`}
                   type="button"
                   className={styles.keepReading}
-                  onClick={() => setOpenedRead({ chatId: post.chatId, messageId: post.id })}
+                  onClick={() => openNilakRead(post)}
                 >
                   <span className={styles.keepReadingTitle}>
                     {renderText(getReadTitle(post))}

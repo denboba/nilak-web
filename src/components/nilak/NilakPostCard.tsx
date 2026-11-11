@@ -130,19 +130,6 @@ const NilakPostCard = ({
 
       {isBarruu && <NilakReadCard post={message} noChannel />}
 
-      {text && !isBarruu && (
-        <div
-          className={buildClassName(styles.text, isFoldable && !isExpanded && styles.folded)}
-          dir="auto"
-          onClick={handleOpen}
-        >
-          {renderTextWithEntities({ text: text.text, entities: text.entities })}
-        </div>
-      )}
-      {isFoldable && !isExpanded && (
-        <button type="button" className={styles.more} onClick={expand}>{lang('ShowMore')}</button>
-      )}
-
       {albumShown ? (
         <div className={buildClassName(styles.album, albumShown.length === 3 && styles.albumOfThree)}>
           {albumShown.map((part, index) => (
@@ -157,6 +144,19 @@ const NilakPostCard = ({
         </div>
       ) : (
         <NilakMediaTile message={message} onClick={handleOpen} />
+      )}
+
+      {text && !isBarruu && (
+        <div
+          className={buildClassName(styles.text, isFoldable && !isExpanded && styles.folded)}
+          dir="auto"
+          onClick={handleOpen}
+        >
+          {renderTextWithEntities({ text: text.text, entities: text.entities })}
+        </div>
+      )}
+      {isFoldable && !isExpanded && (
+        <button type="button" className={styles.more} onClick={expand}>{lang('ShowMore')}</button>
       )}
 
       <div className={styles.actions}>

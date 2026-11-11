@@ -16,7 +16,7 @@ import {
 } from '../../global/helpers';
 import { isIpRevealingMedia } from '../../util/media/ipRevealingMedia';
 import { getIsBarruu } from '../nilak/helpers/barruu';
-import { setOpenedRead } from '../nilak/helpers/nilakTab';
+import { openNilakRead } from '../nilak/helpers/nilakTab';
 import { getDocumentExtension, getDocumentHasPreview } from './helpers/documentInfo';
 import { preloadDocumentMedia } from './helpers/preloadDocumentMedia';
 
@@ -174,7 +174,7 @@ const Document = ({
 
     // Nilak: a Barruu opens in the Nilak reader instead of downloading its zip
     if (IS_NILAK_SHELL && message && getIsBarruu(message)) {
-      setOpenedRead({ chatId: message.chatId, messageId: message.id });
+      openNilakRead(message);
       return;
     }
 

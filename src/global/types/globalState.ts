@@ -128,15 +128,6 @@ export type GlobalState = {
     cursorByChatId?: Record<string, number | false>;
     hasMore?: boolean;
   };
-  // Nilak: the own profile, posts from the personal channel and media from Saved Messages, kept in memory only
-  nilakProfile?: {
-    isLoading?: boolean;
-    shouldReload?: boolean;
-    channelId?: string;
-    posts?: ApiMessage[];
-    postsCount?: number;
-    saved?: ApiMessage[];
-  };
   // Nilak: Reels, short vertical videos from followed and suggested channels, kept in memory only
   nilakReels?: {
     isLoading?: boolean;

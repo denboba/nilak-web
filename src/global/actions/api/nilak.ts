@@ -11,7 +11,7 @@ import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
 import {
-  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectNilakProfileChannel, selectSimilarChannelIds, selectUser,
+  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectSimilarChannelIds,
 } from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
@@ -24,7 +24,6 @@ const FETCH_BATCH_SIZE = 5;
 const REEL_MAX_DURATION = 180;
 const REELS_PER_CHANNEL = 10;
 const REELS_CHANNELS_PER_ROUND = 10;
-const PROFILE_POSTS_LIMIT = 60;
 
 addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void> => {
   const { shouldRefresh, isMore } = payload || {};
@@ -109,54 +108,6 @@ addActionHandler('loadNilakReels', async (global, actions, payload): Promise<voi
     nextChannelIndex: start + round.length,
   });
   setGlobal(global);
-});
-
-addActionHandler('loadNilakProfile', async (global, actions): Promise<void> => {
-  const { currentUserId } = global;
-  if (!currentUserId) return;
-
-  // A request during a load (the full profile arrived meanwhile) runs again once the load ends
-  if (global.nilakProfile?.isLoading) {
-    global = updateNilakProfile(global, { shouldReload: true });
-    setGlobal(global);
-    return;
-  }
-
-  global = updateNilakProfile(global, { isLoading: true, shouldReload: undefined });
-  setGlobal(global);
-
-  const channel = selectNilakProfileChannel(global, currentUserId);
-  const self = selectUser(global, currentUserId)!;
-  if (channel) actions.loadFullChat({ chatId: channel.id });
-
-  const [postsResult, savedResult] = await Promise.all([
-    channel
-      ? callApi('fetchMessages', { chat: channel, threadId: MAIN_THREAD_ID, limit: PROFILE_POSTS_LIMIT })
-      : undefined,
-    callApi('searchMessagesInChat', { peer: self, type: 'media', limit: PROFILE_POSTS_LIMIT }),
-  ]);
-
-  global = getGlobal();
-  if (postsResult && channel) {
-    global = addUsers(global, buildCollectionByKey(postsResult.users, 'id'));
-    global = addChats(global, buildCollectionByKey(postsResult.chats, 'id'));
-    global = addChatMessagesById(global, channel.id, buildCollectionByKey(postsResult.messages, 'id'));
-  }
-  if (savedResult) {
-    global = addChatMessagesById(global, currentUserId, buildCollectionByKey(savedResult.messages, 'id'));
-  }
-  const shouldReload = global.nilakProfile?.shouldReload;
-  global = updateNilakProfile(global, {
-    isLoading: false,
-    shouldReload: undefined,
-    channelId: channel?.id,
-    posts: postsResult ? pickPosts(postsResult.messages).sort((a, b) => b.date - a.date) : [],
-    postsCount: postsResult?.count,
-    saved: savedResult?.messages,
-  });
-  setGlobal(global);
-
-  if (shouldReload) actions.loadNilakProfile();
 });
 
 function getIsReel(message: ApiMessage) {
@@ -289,18 +240,6 @@ function updateNilakReels<T extends GlobalState>(
     ...global,
     nilakReels: {
       ...global.nilakReels,
-      ...update,
-    },
-  };
-}
-
-function updateNilakProfile<T extends GlobalState>(
-  global: T, update: Partial<NonNullable<GlobalState['nilakProfile']>>,
-): T {
-  return {
-    ...global,
-    nilakProfile: {
-      ...global.nilakProfile,
       ...update,
     },
   };

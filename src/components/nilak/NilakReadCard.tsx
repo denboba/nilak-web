@@ -12,7 +12,7 @@ import renderText from '../common/helpers/renderText';
 import {
   getBarruuSubtitle, getIsBarruu, getReadMinutes, getReadTitle,
 } from './helpers/barruu';
-import { setOpenedRead } from './helpers/nilakTab';
+import { openNilakRead } from './helpers/nilakTab';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
@@ -54,7 +54,7 @@ const NilakReadCard = ({
   const coverUrl = useMedia(coverHash) || (photo || video)?.thumbnail?.dataUri;
 
   const handleOpen = useLastCallback(() => {
-    setOpenedRead({ chatId: post.chatId, messageId: post.id });
+    openNilakRead(post);
   });
 
   return (

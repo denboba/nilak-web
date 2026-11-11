@@ -3399,14 +3399,7 @@ export interface LangPair {
   'NilakSoundOff': undefined;
   'NilakLike': undefined;
   'NilakComment': undefined;
-  'NilakPosts': undefined;
-  'NilakSaved': undefined;
-  'NilakFollowersTitle': undefined;
-  'NilakSavedEmpty': undefined;
-  'NilakProfileNoPosts': undefined;
-  'NilakProfileNoChannel': undefined;
   'NilakEditProfile': undefined;
-  'NilakShareProfile': undefined;
   'NilakCreateTitle': undefined;
   'NilakCreateNoChannel': undefined;
   'NilakCreateChannel': undefined;
@@ -5679,9 +5672,6 @@ export interface LangPairWithVariables<V = LangVariable> {
   'PeerPickerUnknownPeer': {
     'id': V;
   };
-  'NilakProfileChannel': {
-    'title': V;
-  };
   'NilakReadPercent': {
     'percent': V;
   };
@@ -7254,8 +7244,7 @@ export interface LangKeyGroups {
       | 'ActionChangedTitleYou'
       | 'ActionChangedTitleChannel'
       | 'ActionCreatedChatYou'
-      | 'AiToneCreated'
-      | 'NilakProfileChannel';
+      | 'AiToneCreated';
     variables: 'title';
   };
   'from,text': {
