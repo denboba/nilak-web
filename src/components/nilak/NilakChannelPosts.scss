@@ -1,0 +1,26 @@
+// Channel posts read like a feed, as in Nilak for Android: each post is as wide as the column allows
+// (leaving room for the share button), and photos and videos fill the post's width.
+// Groups and private chats keep Telegram's bubbles.
+.MessageList.nilak-wide-posts {
+  .messages-container {
+    container-type: inline-size;
+  }
+
+  .Message {
+    --max-width: min(40rem, calc(100cqw - 3.5rem));
+  }
+
+  .message-content.has-solid-background {
+    width: var(--max-width);
+  }
+
+  .message-content.has-solid-background .media-inner {
+    --media-max-height: 32rem;
+
+    width: 100%;
+
+    &::before {
+      width: 100%;
+    }
+  }
+}

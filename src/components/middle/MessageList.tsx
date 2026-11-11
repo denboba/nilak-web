@@ -12,6 +12,7 @@ import { LoadMoreDirection, type MessageListType, type ThreadId } from '../../ty
 import {
   ANIMATION_END_DELAY,
   ANONYMOUS_USER_ID,
+  IS_NILAK_SHELL,
   IS_PERF,
   MESSAGE_LIST_SLICE,
   SCROLL_MAX_DURATION,
@@ -1313,6 +1314,8 @@ const MessageList = ({
     !isReady && 'is-animating',
     hasOpenChatButton && 'saved-dialog',
     isChatProtected && 'hide-on-print',
+    // Nilak: channel posts read like a feed, wider and centred (see `NilakChannelPosts.scss`)
+    IS_NILAK_SHELL && isChannelChat && 'nilak-wide-posts',
   );
 
   const hasMessages = Boolean((renderMessageIds && messageGroups) || lastMessage);

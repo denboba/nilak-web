@@ -19,6 +19,7 @@ import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
 import NilakReels from './NilakReels';
 
+import './NilakChannelPosts.scss';
 import styles from './NilakShell.module.scss';
 
 import nilakLogo from '../../assets/nilak-logo.svg';
