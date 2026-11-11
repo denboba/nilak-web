@@ -33,6 +33,7 @@ type TgMessage = {
   message_id: number;
   chat: TgChat;
   from?: TgUser;
+  forward_origin?: { type: string; chat?: TgChat };
   text?: string;
   date: number;
 };
@@ -89,6 +90,7 @@ export default {
 
     await ensureSchema(env);
     if (url.pathname === '/bot/setup') return setup(env, url.origin);
+    if (url.pathname === '/bot/status') return getStatus(env);
     if (url.pathname !== WEBHOOK_PATH || request.method !== 'POST') return new Response('Not found', { status: 404 });
 
     // Only Telegram knows the secret the webhook was registered with
@@ -110,7 +112,7 @@ export default {
 
   async scheduled(_event: unknown, env: Env): Promise<void> {
     await ensureSchema(env);
-    await sendDuePosts(env);
+    await Promise.all([sendDuePosts(env), ensureWebhook(env)]);
   },
 };
 
@@ -149,11 +151,18 @@ async function handlePrivateMessage(env: Env, message: TgMessage) {
     return;
   }
 
+  // A post forwarded from a channel where both the person and the bot are admins connects that channel
+  const origin = message.forward_origin?.type === 'channel' ? message.forward_origin.chat : undefined;
+  if (origin && await tryConnectForwardedChannel(env, origin, userId)) return;
+
   // Any other message is a post to publish: it is kept until a channel and a time are chosen
   const channels = await selectChannels(env, userId);
   if (!channels.length) {
     await sendText(
-      env, userId, 'Add me to your channel first, then send me a post to publish there.', addToChannelKeyboard(),
+      env,
+      userId,
+      'Add me to your channel as an admin, then forward me any post from that channel to connect it.',
+      addToChannelKeyboard(),
     );
     return;
   }
@@ -250,6 +259,50 @@ async function handleChannelPost(env: Env, post: TgMessage) {
 
   await callTelegram(env, 'deleteMessage', { chat_id: post.chat.id, message_id: post.message_id });
   await connectChannel(env, post.chat);
+}
+
+async function tryConnectForwardedChannel(env: Env, channel: TgChat, userId: number) {
+  const isConnected = await env.DB.prepare('SELECT 1 FROM channels WHERE chat_id = ? AND owner_id = ?')
+    .bind(channel.id, userId).first();
+  if (isConnected) return false;
+
+  const [person, bot] = await Promise.all([
+    requestTelegram<{ status: string; can_post_messages?: boolean }>(
+      env, 'getChatMember', { chat_id: channel.id, user_id: userId },
+    ),
+    requestTelegram<{ status: string }>(env, 'getChatMember', { chat_id: channel.id, user_id: await getBotId(env) }),
+  ]);
+  const canPost = person.result?.status === 'creator' || Boolean(person.result?.can_post_messages);
+  if (!canPost) return false;
+  if (bot.result?.status !== 'administrator') {
+    await sendText(env, userId, `Make me an admin of “${channel.title}” first, then forward the post again.`,
+      addToChannelKeyboard());
+    return true;
+  }
+
+  await connectChannel(env, channel, userId);
+  return true;
+}
+
+let botId: number | undefined;
+
+async function getBotId(env: Env) {
+  if (!botId) botId = (await requestTelegram<{ id: number }>(env, 'getMe', {})).result?.id;
+  return botId;
+}
+
+// What Telegram reports about the webhook, for checking the bot from a browser; holds no secrets
+async function getStatus(env: Env) {
+  const info = await requestTelegram<Record<string, unknown>>(env, 'getWebhookInfo', {});
+  const channels = await env.DB.prepare('SELECT COUNT(DISTINCT chat_id) AS count FROM channels')
+    .first<{ count: number }>();
+  const { url: webhookUrl, ...webhook } = info.result || {};
+  return Response.json({
+    isTokenSet: Boolean(env.NILAK_BOT_TOKEN),
+    isWebhookSet: Boolean(webhookUrl),
+    webhook,
+    connectedChannels: channels?.count || 0,
+  });
 }
 
 // A channel belongs to every person who can post in it, so any of its admins can publish through the bot
@@ -349,6 +402,25 @@ function addToChannelKeyboard() {
   };
 }
 
+const ALLOWED_UPDATES = ['message', 'channel_post', 'callback_query', 'my_chat_member'];
+
+// After a deploy that listens to more updates, the webhook updates itself within 5 minutes
+async function ensureWebhook(env: Env) {
+  if (!env.NILAK_BOT_TOKEN) return;
+
+  const info = await requestTelegram<{ url?: string; allowed_updates?: string[] }>(env, 'getWebhookInfo', {});
+  const allowed = info.result?.allowed_updates || [];
+  const isCurrent = info.result?.url === `${WEB_URL}${WEBHOOK_PATH}`
+    && ALLOWED_UPDATES.every((type) => allowed.includes(type));
+  if (!info.ok || isCurrent) return;
+
+  await callTelegram(env, 'setWebhook', {
+    url: `${WEB_URL}${WEBHOOK_PATH}`,
+    secret_token: await getWebhookSecret(env),
+    allowed_updates: ALLOWED_UPDATES,
+  });
+}
+
 async function setup(env: Env, origin: string) {
   if (!env.NILAK_BOT_TOKEN) {
     return Response.json({ error: 'NILAK_BOT_TOKEN is missing: add it under Settings → Variables and Secrets' });
@@ -358,7 +430,7 @@ async function setup(env: Env, origin: string) {
     requestTelegram(env, 'setWebhook', {
       url: `${origin}${WEBHOOK_PATH}`,
       secret_token: await getWebhookSecret(env),
-      allowed_updates: ['message', 'channel_post', 'callback_query', 'my_chat_member'],
+      allowed_updates: ALLOWED_UPDATES,
     }),
     requestTelegram(env, 'setMyCommands', {
       commands: [
