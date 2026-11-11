@@ -10,6 +10,13 @@
   background: var(--color-background);
 }
 
+.embedded {
+  position: relative;
+  z-index: auto;
+  inset: auto;
+  height: 100%;
+}
+
 .progress {
   position: absolute;
   z-index: 1;

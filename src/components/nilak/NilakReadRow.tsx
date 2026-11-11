@@ -4,6 +4,7 @@ import { withGlobal } from '../../global';
 import type { ApiChat, ApiMessage } from '../../api/types';
 
 import { selectChat } from '../../global/selectors';
+import buildClassName from '../../util/buildClassName';
 import { formatCompactTimestamp, secondsToDate } from '../../util/localization/dateFormat';
 import renderText from '../common/helpers/renderText';
 import { getReadPreview } from './helpers/barruu';
@@ -20,6 +21,8 @@ import styles from './NilakRead.module.scss';
 
 type OwnProps = {
   post: ApiMessage;
+  // Open beside the list on wide screens
+  isSelected?: boolean;
 };
 
 type StateProps = {
@@ -27,7 +30,7 @@ type StateProps = {
 };
 
 // One article in the Read list: the words on the left, a small picture on the right; the whole row opens it
-const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
+const NilakReadRow = ({ post, isSelected, chat }: OwnProps & StateProps) => {
   const lang = useLang();
   const {
     isBarruu, isArticle, title, excerpt, minutes,
@@ -39,7 +42,7 @@ const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
   });
 
   return (
-    <article className={styles.row} onClick={handleOpen}>
+    <article className={buildClassName(styles.row, isSelected && styles.rowSelected)} onClick={handleOpen}>
       <div className={styles.rowText}>
         {chat && (
           <div className={styles.rowChannel}>

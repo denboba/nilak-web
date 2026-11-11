@@ -123,6 +123,8 @@
 }
 
 .play {
+  cursor: pointer;
+
   position: absolute;
   top: 50%;
   left: 50%;
@@ -134,6 +136,8 @@
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
+
+  border: none;
 
   font-size: 1.75rem;
   color: #fff;

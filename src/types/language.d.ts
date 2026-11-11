@@ -3440,6 +3440,7 @@ export interface LangPair {
   'NilakWriterEmbed': undefined;
   'NilakRichShowAnswer': undefined;
   'NilakRichFooter': undefined;
+  'NilakReadPick': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

@@ -20,6 +20,8 @@ const FEED_REFRESH_DELAY = 8000;
 type OwnProps = {
   // The chat whose attach menu opened the writer; none means the person's own channel
   chatId?: string;
+  // Written beside the reading list in Read, which closes the writer when it is done
+  onDone?: NoneToVoidFunction;
 };
 
 type StateProps = {
@@ -27,11 +29,16 @@ type StateProps = {
 };
 
 // The Barruu writer for a chat or the person's channel, or how to choose that channel
-const NilakCreate = ({ chatId, channel }: OwnProps & StateProps) => {
+const NilakCreate = ({ chatId, onDone, channel }: OwnProps & StateProps) => {
   const { openLeftColumnContent, openSettingsScreen, loadNilakFeed } = getActions();
   const lang = useLang();
 
   const handleClose = useLastCallback(() => {
+    if (onDone) {
+      onDone();
+      return;
+    }
+
     setNilakTab(chatId ? 'chats' : 'home');
   });
 
@@ -42,7 +49,11 @@ const NilakCreate = ({ chatId, channel }: OwnProps & StateProps) => {
       return;
     }
 
-    setNilakTab('read');
+    if (onDone) {
+      onDone();
+    } else {
+      setNilakTab('read');
+    }
     setTimeout(() => loadNilakFeed({ shouldRefresh: true }), FEED_REFRESH_DELAY);
   });
 

@@ -3,18 +3,23 @@ import { getActions, getGlobal } from '../../global';
 
 import type { NilakTab } from './helpers/nilakTab';
 
-import { selectNilakProfileChannel, selectTabState } from '../../global/selectors';
+import { ALL_FOLDER_ID } from '../../config';
+import { selectNilakChatsHighlight, selectNilakProfileChannel, selectTabState } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import { formatIntegerCompact } from '../../util/textFormat';
 import {
   getBarruuChatId, getNilakTab, getOpenedRead, openNilakBarruuWriter, setNilakTab,
 } from './helpers/nilakTab';
 
+import useSelector from '../../hooks/data/useSelector';
 import useDerivedState from '../../hooks/useDerivedState';
+import { useFolderManagerForUnreadCounters } from '../../hooks/useFolderManager';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
 import NilakCreate from './NilakCreate';
 import NilakHome from './NilakHome';
+import NilakMessageToast from './NilakMessageToast';
 import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
 import NilakReels from './NilakReels';
@@ -58,6 +63,10 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
   const barruuChatId = useDerivedState(getBarruuChatId);
+  const chatsHighlight = useSelector(selectNilakChatsHighlight);
+  const unreadCount = useFolderManagerForUnreadCounters()[ALL_FOLDER_ID]?.notificationsCount || 0;
+  // Profile and Create show Telegram's chat columns, so the item lit up follows what is open there
+  const activeTab = tab === 'chats' ? chatsHighlight : tab;
 
   // Profile opens Telegram's own profile of the person, beside their Saved Messages
   const handleNavigate = useLastCallback((itemTab: NilakTab) => {
@@ -98,7 +107,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
 
   function renderPage() {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
-    if (tab === 'read') return <NilakRead />;
+    if (tab === 'read') return <NilakRead isNarrow={isNarrow} />;
     if (tab === 'reels') return <NilakReels />;
     if (tab === 'create') return <NilakCreate chatId={barruuChatId} />;
 
@@ -123,17 +132,20 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             <button
               key={itemTab}
               type="button"
-              className={buildClassName(styles.item, tab === itemTab && styles.active)}
+              className={buildClassName(styles.item, activeTab === itemTab && styles.active)}
               onClick={() => handleNavigate(itemTab)}
             >
               {renderIcon(path)}
               <span className={styles.label}>{lang(langKey)}</span>
+              {itemTab === 'chats' && Boolean(unreadCount) && (
+                <span className={styles.badge}>{formatIntegerCompact(lang, unreadCount)}</span>
+              )}
             </button>
           ))}
           {!isNarrow && (
             <button
               type="button"
-              className={buildClassName(styles.create, tab === 'create' && styles.active)}
+              className={buildClassName(styles.create, activeTab === 'create' && styles.active)}
               onClick={handleCreate}
             >
               {renderIcon(PLUS_PATH)}
@@ -145,7 +157,11 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
       {isPageOpen && (
         <div
           className={buildClassName(
-            styles.page, !isNarrow && styles.pageBesideRail, tab === 'reels' && styles.pageReels, 'custom-scroll',
+            styles.page,
+            !isNarrow && styles.pageBesideRail,
+            tab === 'reels' && styles.pageReels,
+            tab === 'read' && !isNarrow && styles.pageSplit,
+            'custom-scroll',
           )}
         >
           {isNarrow && tab !== 'reels' && (
@@ -163,9 +179,11 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
             </div>
           )}
           <div className={styles.pageContent}>{renderPage()}</div>
+          <NilakMessageToast />
         </div>
       )}
-      {openedRead && (
+      {/* On wide screens Read shows the article beside its list; elsewhere the reader covers the page */}
+      {openedRead && (isNarrow || tab !== 'read') && (
         <NilakReader
           chatId={openedRead.chatId}
           messageId={openedRead.messageId}

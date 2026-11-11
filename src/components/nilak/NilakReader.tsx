@@ -38,6 +38,8 @@ type OwnProps = {
   messageId: number;
   // The post as it was opened, used when the message store no longer holds it
   fallbackMessage?: ApiMessage;
+  // Shown inside Read beside the list instead of covering the page
+  isEmbedded?: boolean;
 };
 
 type StateProps = {
@@ -51,7 +53,7 @@ const TELEGRAM_LINK = /^(https?:\/\/)?(t\.me|telegram\.me)\/|^tg:/i;
 const FULL_PERCENT = 100;
 
 const NilakReader = ({
-  chatId, messageId, chat, message, theme,
+  chatId, messageId, isEmbedded, chat, message, theme,
 }: OwnProps & StateProps) => {
   const lang = useLang();
   const scrollRef = useRef<HTMLDivElement>();
@@ -165,7 +167,11 @@ const NilakReader = ({
   ), [message?.content.text, message?.content.richMessage, isBarruu]);
 
   return (
-    <div className={styles.root} role="dialog" aria-modal>
+    <div
+      className={buildClassName(styles.root, isEmbedded && styles.embedded)}
+      role={isEmbedded ? undefined : 'dialog'}
+      aria-modal={isEmbedded ? undefined : true}
+    >
       <div className={styles.progress} style={`width: ${progress}%`} />
       <header className={styles.header}>
         <button type="button" className={styles.back} aria-label={lang('Close')} onClick={handleClose}>

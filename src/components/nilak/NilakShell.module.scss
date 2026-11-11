@@ -45,6 +45,11 @@
   }
 }
 
+// Read on wide screens: the list and the article scroll on their own, like chats
+.pageSplit {
+  overflow: hidden;
+}
+
 // Reels keep the compact menu, so the black page starts beside it
 .pageReels {
   overflow: hidden;
@@ -155,6 +160,8 @@
 
 .item {
   cursor: pointer;
+
+  position: relative;
 
   display: flex;
   align-items: center;
@@ -286,4 +293,92 @@
   color: #fff;
 
   background: linear-gradient(135deg, #8e5bc9, #5b2db0);
+}
+
+// Unread messages on the Chats item, like Telegram's counter on the chat list
+.badge {
+  position: absolute;
+  top: 0.25rem;
+  left: calc(50% + 0.375rem);
+
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3125rem;
+  border-radius: 0.625rem;
+
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25rem;
+  color: #fff;
+  text-align: center;
+
+  background: var(--color-primary);
+}
+
+// A new message while a Nilak page covers the chats
+.toast {
+  cursor: pointer;
+
+  position: fixed;
+  z-index: 5;
+  top: 1rem;
+  right: 1rem;
+
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 1rem;
+
+  text-align: start;
+
+  background: var(--color-background);
+  box-shadow: 0 0.5rem 2rem rgba(42, 29, 64, 0.2);
+
+  animation: toast-in 0.2s ease-out;
+
+  @media (max-width: 600px) {
+    top: 0.75rem;
+    right: 1rem;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(-0.5rem);
+    opacity: 0;
+  }
+}
+
+.toastText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.toastTitle,
+.toastMessage {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toastTitle {
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.toastMessage {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+// In the wide menu the count sits at the end of the row
+.railWide .badge {
+  position: static;
+  margin-left: auto;
 }
