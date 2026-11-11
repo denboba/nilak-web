@@ -1,17 +1,28 @@
-// Channel posts read like a feed, as in Nilak for Android: each post is as wide as the column allows
-// (leaving room for the share button), and photos and videos fill the post's width.
-// Groups and private chats keep Telegram's bubbles.
+// Channel posts read like a feed, as in Nilak for Android: each post is as wide as the header and the bar under
+// the list, and photos and videos fill the post's width. Groups and private chats keep Telegram's bubbles.
 .MessageList.nilak-wide-posts {
   .messages-container {
     container-type: inline-size;
   }
 
   .Message {
-    --max-width: min(40rem, calc(100cqw - 3.5rem));
+    --max-width: 100cqw;
   }
 
   .message-content.has-solid-background {
     width: var(--max-width);
+  }
+
+  // Cards, not chat bubbles: the same round corners on every post and no tail
+  .Message .message-content.has-solid-background {
+    --border-top-left-radius: var(--border-radius-messages);
+    --border-top-right-radius: var(--border-radius-messages);
+    --border-bottom-left-radius: var(--border-radius-messages);
+    --border-bottom-right-radius: var(--border-radius-messages);
+  }
+
+  .Message .svg-appendix {
+    display: none;
   }
 
   // The photo sits in the post's padding (negative side margins), so it is wider than the text by both margins
@@ -19,6 +30,7 @@
     --media-max-height: 32rem;
 
     width: calc(100% + 1rem);
+    max-width: none;
 
     &::before {
       width: 100%;
@@ -27,6 +39,26 @@
     > .full-media,
     > .thumbnail {
       object-fit: cover;
+    }
+  }
+
+  // Share and comments float inside the post's right edge, above the reactions, instead of beside the post
+  .Message:not(.own) .message-action-buttons-container {
+    right: 0.5rem;
+    bottom: 2.5rem;
+    height: calc(100% - 2.5rem);
+  }
+
+  // Phones keep the buttons beside the post, where they never cover the text
+  @media (max-width: 600px) {
+    .Message {
+      --max-width: calc(100cqw - 3rem);
+    }
+
+    .Message:not(.own) .message-action-buttons-container {
+      right: -3rem;
+      bottom: 0;
+      height: 100%;
     }
   }
 }
