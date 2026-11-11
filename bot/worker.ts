@@ -3,7 +3,7 @@
 //
 // What it does now:
 // - Welcomes people with a Telegram rich message and links to Nilak.
-// - Remembers the channels where someone made it an admin.
+// - Remembers the channels and groups it was added to, for all their admins.
 // - Publishes or schedules posts: send or forward a post to the bot, pick a channel and a time.
 //
 // Setup (once, after the first deploy): open https://nilak.org/bot/setup to register the webhook and commands.
@@ -57,6 +57,8 @@ const WEB_URL = 'https://nilak.org';
 const BOT_USERNAME = 'NilakAppBot';
 const WEBHOOK_PATH = '/bot/webhook';
 const ADMIN_RIGHTS = 'post_messages+edit_messages+delete_messages';
+const GROUP_ADMIN_RIGHTS = 'delete_messages+pin_messages';
+const GROUP_TYPES = new Set(['group', 'supergroup']);
 const HOUR = 3600;
 const DAY = 24 * HOUR;
 // Choices offered after "When?"; `now` publishes at once
@@ -123,6 +125,8 @@ async function handleUpdate(env: Env, update: TgUpdate) {
     await handleChannelPost(env, update.channel_post);
   } else if (update.callback_query) {
     await handleCallback(env, update.callback_query);
+  } else if (update.message && GROUP_TYPES.has(update.message.chat.type)) {
+    await handleGroupMessage(env, update.message);
   } else if (update.message?.chat.type === 'private' && !update.message.from?.is_bot) {
     // Messages from other bots (Bot-to-Bot Communication Mode) get no reply, so two bots can never loop
     await handlePrivateMessage(env, update.message);
@@ -161,7 +165,8 @@ async function handlePrivateMessage(env: Env, message: TgMessage) {
     await sendText(
       env,
       userId,
-      'Add me to your channel as an admin, then forward me any post from that channel to connect it.',
+      'Add me to your channel as an admin and forward me any post from it, or add me to your group. '
+      + 'Then send me a post to publish there.',
       addToChannelKeyboard(),
     );
     return;
@@ -172,7 +177,7 @@ async function handlePrivateMessage(env: Env, message: TgMessage) {
   ).bind(userId, message.chat.id, message.message_id).run();
   await callTelegram(env, 'sendMessage', {
     chat_id: userId,
-    text: 'Publish this to which channel?',
+    text: 'Publish this where?',
     reply_to_message_id: message.message_id,
     reply_markup: {
       inline_keyboard: channels.map((channel) => [{ text: channel.title, callback_data: `ch:${channel.chat_id}` }]),
@@ -201,7 +206,7 @@ async function handleCallback(env: Env, query: TgCallbackQuery) {
   if (kind === 'ch') {
     const channels = await selectChannels(env, userId);
     if (!channels.some((channel) => String(channel.chat_id) === value)) {
-      await answerCallback(env, query.id, 'I am no longer in that channel');
+      await answerCallback(env, query.id, 'I am no longer in that chat');
       return;
     }
 
@@ -238,9 +243,11 @@ async function handleCallback(env: Env, query: TgCallbackQuery) {
 // The bot is added to or removed from a channel
 async function handleMembership(env: Env, update: TgChatMemberUpdated) {
   const { chat, from, new_chat_member: member } = update;
-  if (chat.type !== 'channel') return;
+  const isGroup = GROUP_TYPES.has(chat.type);
+  if (chat.type !== 'channel' && !isGroup) return;
 
-  if (member.status === 'administrator') {
+  // In a channel the bot posts as an admin; in a group, any member can post
+  if (member.status === 'administrator' || (isGroup && member.status === 'member')) {
     await connectChannel(env, chat, from.id);
     return;
   }
@@ -259,6 +266,20 @@ async function handleChannelPost(env: Env, post: TgMessage) {
 
   await callTelegram(env, 'deleteMessage', { chat_id: post.chat.id, message_id: post.message_id });
   await connectChannel(env, post.chat);
+}
+
+// "/start@NilakAppBot" sent by a group admin connects the group
+async function handleGroupMessage(env: Env, message: TgMessage) {
+  const command = message.text?.trim().toLowerCase();
+  if (!message.from || !command?.startsWith('/') || !command.includes(`@${BOT_USERNAME.toLowerCase()}`)) return;
+
+  const member = await requestTelegram<{ status: string }>(
+    env, 'getChatMember', { chat_id: message.chat.id, user_id: message.from.id },
+  );
+  if (member.result?.status !== 'creator' && member.result?.status !== 'administrator') return;
+
+  await callTelegram(env, 'deleteMessage', { chat_id: message.chat.id, message_id: message.message_id });
+  await connectChannel(env, message.chat, message.from.id);
 }
 
 async function tryConnectForwardedChannel(env: Env, channel: TgChat, userId: number) {
@@ -310,8 +331,11 @@ async function connectChannel(env: Env, chat: TgChat, addedBy?: number) {
   const admins = await requestTelegram<{ user: TgUser; status: string; can_post_messages?: boolean }[]>(
     env, 'getChatAdministrators', { chat_id: chat.id },
   );
+  // Channel admins need the right to post; every group admin can publish there
+  const isChannel = chat.type === 'channel';
   const ownerIds = new Set((admins.result || [])
-    .filter(({ user, status, can_post_messages: canPost }) => !user.is_bot && (status === 'creator' || canPost))
+    .filter(({ user, status, can_post_messages: canPost }) => !user.is_bot
+      && (status === 'creator' || (isChannel ? canPost : status === 'administrator')))
     .map(({ user }) => user.id));
   if (addedBy) ownerIds.add(addedBy);
 
@@ -346,10 +370,10 @@ async function sendWelcome(env: Env, chatId: number) {
   // A rich message: the article format Nilak's Barruu also uses
   const markdown = [
     '# Welcome to Nilak 🌸',
-    'I help you run your channel:',
-    '- **Publish** — send or forward me any post, choose a channel, and it goes out.',
+    'I help you run your channels and groups:',
+    '- **Publish** — send or forward me any post, choose where, and it goes out.',
     '- **Schedule** — pick a time, and I post it for you.',
-    '- **Stay on top** — /scheduled shows what is waiting, /channels lists your channels.',
+    '- **Stay on top** — /scheduled shows what is waiting, /channels lists your channels and groups.',
     '',
     `Read and write Barruu, watch reels and chat on [nilak.org](${WEB_URL}).`,
   ].join('\n');
@@ -359,14 +383,16 @@ async function sendWelcome(env: Env, chatId: number) {
     rich_message: { markdown },
     reply_markup: addToChannelKeyboard(),
   });
-  if (!isSent) await sendText(env, chatId, 'Welcome to Nilak! Add me to your channel to publish and schedule posts.');
+  if (!isSent) {
+    await sendText(env, chatId, 'Welcome to Nilak! Add me to your channel or group to publish and schedule posts.');
+  }
 }
 
 async function sendChannelList(env: Env, userId: number) {
   const channels = await selectChannels(env, userId);
   const text = channels.length
-    ? `Your channels:\n${channels.map((channel) => `• ${channel.title}`).join('\n')}`
-    : 'No channels yet.';
+    ? `Your channels and groups:\n${channels.map((channel) => `• ${channel.title}`).join('\n')}`
+    : 'No channels or groups yet.';
   await sendText(env, userId, text, addToChannelKeyboard());
 }
 
@@ -397,6 +423,7 @@ function addToChannelKeyboard() {
   return {
     inline_keyboard: [
       [{ text: '➕ Add me to a channel', url: `https://t.me/${BOT_USERNAME}?startchannel&admin=${ADMIN_RIGHTS}` }],
+      [{ text: '➕ Add me to a group', url: `https://t.me/${BOT_USERNAME}?startgroup&admin=${GROUP_ADMIN_RIGHTS}` }],
       [{ text: 'Open Nilak', url: WEB_URL }],
     ],
   };
@@ -435,7 +462,7 @@ async function setup(env: Env, origin: string) {
     requestTelegram(env, 'setMyCommands', {
       commands: [
         { command: 'start', description: 'What I can do' },
-        { command: 'channels', description: 'Your channels' },
+        { command: 'channels', description: 'Your channels and groups' },
         { command: 'scheduled', description: 'Posts waiting to be published' },
         { command: 'cancel', description: 'Forget the post being prepared' },
       ],
