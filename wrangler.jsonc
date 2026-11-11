@@ -6,6 +6,8 @@
   "name": "nilak-web",
   "main": "bot/worker.ts",
   "compatibility_date": "2025-10-01",
+  // Variables set in the Cloudflare dashboard stay through deploys from GitHub
+  "keep_vars": true,
   "build": {
     "command": "bash deploy/cloudflare-build.sh"
   },
