@@ -22,6 +22,7 @@ import useLastCallback from '../../hooks/useLastCallback';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import NilakAlbumCarousel from './NilakAlbumCarousel';
 import NilakMediaTile from './NilakMediaTile';
 import NilakReadCard from './NilakReadCard';
 
@@ -40,8 +41,6 @@ type StateProps = {
 };
 
 const MAX_REACTIONS = 3;
-// Album posts show up to four photos; the last tile counts the rest
-const MAX_ALBUM_TILES = 4;
 // Longer texts start folded with Show more, like the smart fold in Nilak for Android
 const FOLD_TEXT_LENGTH = 320;
 
@@ -57,7 +56,6 @@ const NilakPostCard = ({
   const message = liveMessage || post;
   const { chatId, id: messageId } = message;
   const text = message.content.text;
-  const albumShown = album && album.length > 1 ? album.slice(0, MAX_ALBUM_TILES) : undefined;
   const isFoldable = Boolean(text && text.text.length > FOLD_TEXT_LENGTH);
   const isBarruu = getIsBarruu(message);
 
@@ -130,18 +128,8 @@ const NilakPostCard = ({
 
       {isBarruu && <NilakReadCard post={message} noChannel />}
 
-      {albumShown ? (
-        <div className={buildClassName(styles.album, albumShown.length === 3 && styles.albumOfThree)}>
-          {albumShown.map((part, index) => (
-            <NilakMediaTile
-              key={part.id}
-              message={part}
-              className={styles.albumTile}
-              moreCount={index === albumShown.length - 1 ? album!.length - albumShown.length : undefined}
-              onClick={handleOpen}
-            />
-          ))}
-        </div>
+      {album && album.length > 1 ? (
+        <NilakAlbumCarousel album={album} onOpen={handleOpen} />
       ) : (
         <NilakMediaTile message={message} onClick={handleOpen} />
       )}

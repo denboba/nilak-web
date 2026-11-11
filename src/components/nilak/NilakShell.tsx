@@ -3,7 +3,7 @@ import { getActions, getGlobal } from '../../global';
 
 import type { NilakTab } from './helpers/nilakTab';
 
-import { selectNilakProfileChannel } from '../../global/selectors';
+import { selectNilakProfileChannel, selectTabState } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import {
   getBarruuChatId, getNilakTab, getOpenedRead, openNilakBarruuWriter, setNilakTab,
@@ -53,7 +53,7 @@ const NAV_ITEMS: NavItem[] = [
 const PLUS_PATH = 'M12 5v14M5 12h14';
 
 const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
-  const { openChat, openChatWithInfo } = getActions();
+  const { openChat, openChatWithInfo, toggleChatInfo } = getActions();
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
@@ -62,6 +62,8 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
   // Profile opens Telegram's own profile of the person, beside their Saved Messages
   const handleNavigate = useLastCallback((itemTab: NilakTab) => {
     if (itemTab !== 'profile') {
+      // The profile panel belongs to Profile, so going anywhere else closes it
+      if (selectTabState(getGlobal()).chatInfo.isOwnProfile) toggleChatInfo({ force: false });
       setNilakTab(itemTab);
       return;
     }

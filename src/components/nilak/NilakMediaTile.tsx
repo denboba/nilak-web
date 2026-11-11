@@ -16,14 +16,12 @@ import styles from './NilakPostCard.module.scss';
 type OwnProps = {
   message: ApiMessage;
   className?: string;
-  // Album parts beyond the shown ones, drawn over the last tile as "+N"
-  moreCount?: number;
   onClick?: NoneToVoidFunction;
 };
 
 // A photo, or the first frame of a video, in a post card
 const NilakMediaTile = ({
-  message, className, moreCount, onClick,
+  message, className, onClick,
 }: OwnProps) => {
   const photo = getMessagePhoto(message);
   const video = getMessageVideo(message);
@@ -37,13 +35,7 @@ const NilakMediaTile = ({
   return (
     <div className={buildClassName(styles.media, className)} onClick={onClick}>
       <img className={styles.mediaImage} src={mediaUrl || thumbUrl} alt="" draggable={false} />
-      {video && !moreCount && <div className={styles.play}><Icon name="play" /></div>}
-      {Boolean(moreCount) && (
-        <div className={styles.moreCount}>
-          +
-          {moreCount}
-        </div>
-      )}
+      {video && <div className={styles.play}><Icon name="play" /></div>}
     </div>
   );
 };
