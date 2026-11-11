@@ -27,7 +27,7 @@ type D1Statement = {
   all: <T>() => Promise<{ results: T[] }>;
 };
 
-type TgUser = { id: number; first_name: string; language_code?: string };
+type TgUser = { id: number; is_bot?: boolean; first_name: string; language_code?: string };
 type TgChat = { id: number; type: string; title?: string; username?: string };
 type TgMessage = {
   message_id: number;
@@ -118,7 +118,8 @@ async function handleUpdate(env: Env, update: TgUpdate) {
     await handleMembership(env, update.my_chat_member);
   } else if (update.callback_query) {
     await handleCallback(env, update.callback_query);
-  } else if (update.message?.chat.type === 'private') {
+  } else if (update.message?.chat.type === 'private' && !update.message.from?.is_bot) {
+    // Messages from other bots (Bot-to-Bot Communication Mode) get no reply, so two bots can never loop
     await handlePrivateMessage(env, update.message);
   }
 }
@@ -319,13 +320,17 @@ function addToChannelKeyboard() {
 }
 
 async function setup(env: Env, origin: string) {
+  if (!env.NILAK_BOT_TOKEN) {
+    return Response.json({ error: 'NILAK_BOT_TOKEN is missing: add it under Settings → Variables and Secrets' });
+  }
+
   const results = await Promise.all([
-    callTelegram(env, 'setWebhook', {
+    requestTelegram(env, 'setWebhook', {
       url: `${origin}${WEBHOOK_PATH}`,
       secret_token: await getWebhookSecret(env),
       allowed_updates: ['message', 'callback_query', 'my_chat_member'],
     }),
-    callTelegram(env, 'setMyCommands', {
+    requestTelegram(env, 'setMyCommands', {
       commands: [
         { command: 'start', description: 'What I can do' },
         { command: 'channels', description: 'Your channels' },
@@ -335,6 +340,7 @@ async function setup(env: Env, origin: string) {
     }),
   ]);
 
+  // Telegram's own answers, so a failed setup says why
   return Response.json({ webhook: results[0], commands: results[1] });
 }
 
@@ -364,6 +370,10 @@ function editMessage(env: Env, message: TgMessage | undefined, text: string, rep
 }
 
 async function callTelegram(env: Env, method: string, body: Record<string, unknown>) {
+  return (await requestTelegram(env, method, body)).ok;
+}
+
+async function requestTelegram(env: Env, method: string, body: Record<string, unknown>) {
   try {
     const response = await fetch(`https://api.telegram.org/bot${env.NILAK_BOT_TOKEN}/${method}`, {
       method: 'POST',
@@ -373,11 +383,11 @@ async function callTelegram(env: Env, method: string, body: Record<string, unkno
     const result = await response.json() as { ok: boolean; description?: string };
     // eslint-disable-next-line no-console
     if (!result.ok) console.error(method, result.description);
-    return result.ok;
+    return { ok: result.ok, description: result.description };
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(method, err);
-    return false;
+    return { ok: false, description: String(err) };
   }
 }
 
