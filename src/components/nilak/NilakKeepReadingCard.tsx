@@ -10,6 +10,8 @@ import useReadCover from './helpers/useReadCover';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
+import Icon from '../common/icons/Icon';
+
 import styles from './NilakRead.module.scss';
 
 type OwnProps = {
@@ -30,7 +32,7 @@ const NilakKeepReadingCard = ({ post, progress }: OwnProps) => {
     <button type="button" className={styles.keepCard} onClick={handleOpen}>
       {coverUrl
         ? <img className={styles.keepThumb} src={coverUrl} alt="" draggable={false} />
-        : <span className={styles.keepThumbEmpty} aria-hidden>✿</span>}
+        : <span className={styles.keepThumbEmpty} aria-hidden><Icon name="article" /></span>}
       <span className={styles.keepInfo}>
         <span className={styles.keepTitle} dir="auto">{renderText(getReadTitle(post))}</span>
         <span className={styles.keepPercent}>{lang('NilakReadPercent', { percent: Math.round(progress) })}</span>

@@ -14,6 +14,7 @@ import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
 import Avatar from '../common/Avatar';
+import Icon from '../common/icons/Icon';
 
 import styles from './NilakRead.module.scss';
 
@@ -51,7 +52,7 @@ const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
         <h3 className={styles.rowTitle} dir="auto">{renderText(title)}</h3>
         {excerpt && <p className={styles.rowExcerpt} dir="auto">{renderText(excerpt)}</p>}
         <div className={styles.rowMeta}>
-          {isBarruu && <span className={styles.rowBarruu}>✿ Barruu</span>}
+          {isBarruu && <span className={styles.rowBarruu}>Barruu</span>}
           {isArticle && <span className={styles.rowBarruu}>{lang('NilakArticle')}</span>}
           {Boolean(minutes) && <span>{lang('NilakReadMinutes', { count: minutes }, { pluralValue: minutes })}</span>}
         </div>
@@ -59,7 +60,7 @@ const NilakReadRow = ({ post, chat }: OwnProps & StateProps) => {
       {coverUrl ? (
         <img className={styles.rowThumb} src={coverUrl} alt="" draggable={false} />
       ) : isBarruu && (
-        <div className={styles.rowThumbBarruu} aria-hidden>✿</div>
+        <div className={styles.rowThumbBarruu} aria-hidden><Icon name="article" /></div>
       )}
     </article>
   );

@@ -1,5 +1,5 @@
 import {
-  memo, useEffect, useMemo, useRef, useState,
+  memo, useEffect, useRef, useState,
 } from '../../lib/teact/teact';
 import { getActions, getGlobal } from '../../global';
 
@@ -12,12 +12,15 @@ import { selectUser } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
 import buildAttachment from '../middle/composer/helpers/buildAttachment';
 import { buildBarruuCaption, buildBarruuFile } from './helpers/barruu';
+import {
+  buildFigureHtml, buildQuizHtml, buildTableHtml, editorToMarkdown, escapeAttribute, getIsMarkdownLike,
+  markdownToEditorHtml, sanitizePastedHtml,
+} from './helpers/barruuHtml';
 
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
 import Icon from '../common/icons/Icon';
-import NilakBarruuBody from './NilakBarruuBody';
 
 import styles from './NilakCreate.module.scss';
 import readerStyles from './NilakReader.module.scss';
@@ -28,46 +31,65 @@ type OwnProps = {
   onPublished: NoneToVoidFunction;
 };
 
-type Snippet = { icon: IconName; labelKey: 'NilakWriterHeading' | 'NilakWriterBold' | 'NilakWriterItalic'
-  | 'NilakWriterQuote' | 'NilakWriterList' | 'NilakWriterTip' | 'NilakWriterQuiz' | 'NilakWriterTable'
-  | 'NilakWriterDivider'; before: string; after?: string; isBlock?: boolean; };
+type ToolLangKey = 'NilakWriterHeading' | 'NilakWriterSubheading' | 'NilakWriterBold' | 'NilakWriterItalic'
+  | 'NilakWriterStrike' | 'NilakWriterHighlight' | 'NilakWriterLink' | 'NilakWriterQuote' | 'NilakWriterList'
+  | 'NilakWriterNumbered' | 'NilakWriterTip' | 'NilakWriterPhoto' | 'NilakWriterTable' | 'NilakWriterQuiz'
+  | 'NilakWriterDivider';
 
-// The writer inserts Nilak Markdown, the format Nilak for Android reads and writes
-const SNIPPETS: Snippet[] = [
-  { icon: 'heading', labelKey: 'NilakWriterHeading', before: '## ', isBlock: true },
-  { icon: 'bold', labelKey: 'NilakWriterBold', before: '**', after: '**' },
-  { icon: 'italic', labelKey: 'NilakWriterItalic', before: '*', after: '*' },
-  { icon: 'quote', labelKey: 'NilakWriterQuote', before: '> ', isBlock: true },
-  { icon: 'list', labelKey: 'NilakWriterList', before: '- ', isBlock: true },
-  { icon: 'lamp', labelKey: 'NilakWriterTip', before: '> [!TIP] ', isBlock: true },
-  {
-    icon: 'poll',
-    labelKey: 'NilakWriterQuiz',
-    before: '```quiz\nQuestion?\n+ Right answer\n- Other answer\n> Why it is right\n```\n',
-    isBlock: true,
-  },
-  {
-    icon: 'table',
-    labelKey: 'NilakWriterTable',
-    before: '| Column | Column |\n|---|---|\n| Cell | Cell |\n',
-    isBlock: true,
-  },
-  { icon: 'stats', labelKey: 'NilakWriterDivider', before: '---\n', isBlock: true },
+type Tool = { id: string; icon: IconName; labelKey: ToolLangKey; command?: string; block?: string };
+
+// Tools come in groups (text, blocks, inserts); `command` tools show whether the selection already has them
+const TOOL_GROUPS: Tool[][] = [
+  [
+    { id: 'h2', icon: 'heading-1', labelKey: 'NilakWriterHeading', block: 'h2' },
+    { id: 'h3', icon: 'heading-2', labelKey: 'NilakWriterSubheading', block: 'h3' },
+  ],
+  [
+    { id: 'bold', icon: 'bold', labelKey: 'NilakWriterBold', command: 'bold' },
+    { id: 'italic', icon: 'italic', labelKey: 'NilakWriterItalic', command: 'italic' },
+    { id: 'strike', icon: 'strikethrough', labelKey: 'NilakWriterStrike', command: 'strikeThrough' },
+    { id: 'mark', icon: 'brush', labelKey: 'NilakWriterHighlight' },
+    { id: 'link', icon: 'link', labelKey: 'NilakWriterLink' },
+  ],
+  [
+    { id: 'quote', icon: 'quote', labelKey: 'NilakWriterQuote', block: 'blockquote' },
+    { id: 'bullets', icon: 'list', labelKey: 'NilakWriterList', command: 'insertUnorderedList' },
+    { id: 'numbers', icon: 'numbered-list', labelKey: 'NilakWriterNumbered', command: 'insertOrderedList' },
+    { id: 'tip', icon: 'lamp', labelKey: 'NilakWriterTip' },
+  ],
+  [
+    { id: 'photo', icon: 'media', labelKey: 'NilakWriterPhoto' },
+    { id: 'table', icon: 'table', labelKey: 'NilakWriterTable' },
+    { id: 'quiz', icon: 'poll', labelKey: 'NilakWriterQuiz' },
+    { id: 'divider', icon: 'stats', labelKey: 'NilakWriterDivider' },
+  ],
 ];
 const DRAFT_STORAGE_KEY = 'nilak-barruu-draft';
 const IMAGE_ACCEPT = 'image/*,video/*';
+// The round mark before a quiz answer; clicking it marks the answer as the right one
+const QUIZ_MARK_WIDTH = 32;
 
 type TextDraft = { title: string; subtitle: string; body: string };
 
 const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
   const { sendMessage, showNotification } = getActions();
   const lang = useLang();
-  const bodyRef = useRef<HTMLTextAreaElement>();
+  const editorRef = useRef<HTMLDivElement>();
   const fileInputRef = useRef<HTMLInputElement>();
+  const rangeRef = useRef<Range>();
+  const mediaRef = useRef<Record<string, File>>({});
   const [draft, setDraft] = useState<TextDraft>(readSavedDraft);
-  const [media, setMedia] = useState<Record<string, File>>({});
-  const [isPreview, setIsPreview] = useState(false);
+  const [activeTools, setActiveTools] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // The editor's content belongs to the browser while writing; it is filled once from the saved draft
+  useEffect(() => {
+    const editor = editorRef.current!;
+    // Media files stay in memory only, so a reloaded draft drops the pictures it can no longer show
+    editor.innerHTML = markdownToEditorHtml(draft.body, {});
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+    // eslint-disable-next-line react-hooks-static-deps/exhaustive-deps
+  }, []);
 
   // The text is kept in this browser while writing, so a reload does not lose it
   useEffect(() => {
@@ -78,36 +100,127 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
     }
   }, [draft]);
 
-  const mediaUrls = useMemo(() => Object.fromEntries(
-    Object.entries(media).map(([path, file]) => [path, URL.createObjectURL(file)]),
-  ), [media]);
+  // The toolbar follows the selection, lighting up the formatting under the caret
+  useEffect(() => {
+    function handleSelectionChange() {
+      const selection = document.getSelection();
+      const editor = editorRef.current;
+      if (!selection?.rangeCount || !editor?.contains(selection.anchorNode)) return;
+
+      rangeRef.current = selection.getRangeAt(0).cloneRange();
+      const block = String(document.queryCommandValue('formatBlock')).toLowerCase();
+      const active = TOOL_GROUPS.flat().filter(({ command, block: toolBlock }) => (
+        (command && document.queryCommandState(command)) || (toolBlock && toolBlock === block)
+      )).map(({ id }) => id);
+      setActiveTools((current) => (current.join() === active.join() ? current : active));
+    }
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, []);
 
   useEffect(() => () => {
-    Object.values(mediaUrls).forEach((url) => URL.revokeObjectURL(url));
-  }, [mediaUrls]);
+    editorRef.current?.querySelectorAll<HTMLImageElement | HTMLVideoElement>('[data-path]').forEach((media) => {
+      if (media.src.startsWith('blob:')) URL.revokeObjectURL(media.src);
+    });
+  }, []);
 
   const canPublish = Boolean(draft.title.trim() && draft.body.trim()) && !isPublishing;
 
-  function insertText(before: string, after = '', isBlock?: boolean) {
-    const textarea = bodyRef.current;
-    const { body } = draft;
-    const start = textarea?.selectionStart ?? body.length;
-    const end = textarea?.selectionEnd ?? body.length;
-    const prefix = isBlock && start > 0 && body[start - 1] !== '\n' ? '\n' : '';
-    const selected = body.slice(start, end);
-    const nextBody = `${body.slice(0, start)}${prefix}${before}${selected}${after}${body.slice(end)}`;
-    setDraft((current) => ({ ...current, body: nextBody }));
-
-    const caret = start + prefix.length + before.length + selected.length;
-    requestAnimationFrame(() => {
-      bodyRef.current?.focus();
-      bodyRef.current?.setSelectionRange(caret, caret);
-    });
+  function syncBody() {
+    const body = editorToMarkdown(editorRef.current!);
+    setDraft((current) => (current.body === body ? current : { ...current, body }));
   }
 
-  const handleTitleChange = useLastCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Toolbar buttons and the file picker take the focus, so the caret is put back before each change
+  function restoreSelection() {
+    const editor = editorRef.current!;
+    editor.focus();
+    const selection = document.getSelection()!;
+    const range = rangeRef.current;
+    if (range && editor.contains(range.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+
+    const end = document.createRange();
+    end.selectNodeContents(editor);
+    end.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(end);
+  }
+
+  // Blocks (pictures, tables, quizzes) go after the paragraph with the caret, or replace it when it is empty,
+  // so they never split the text in the middle of a line
+  function insertBlock(html: string) {
+    restoreSelection();
+    const editor = editorRef.current!;
+    const selection = document.getSelection()!;
+    let current: Node | null = selection.anchorNode;
+    while (current && current.parentNode !== editor) current = current.parentNode;
+
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const last = template.content.lastChild;
+    if (!current) {
+      editor.append(template.content);
+    } else if (!current.textContent?.trim() && !(current instanceof Element && current.querySelector('img,video'))) {
+      editor.replaceChild(template.content, current);
+    } else {
+      editor.insertBefore(template.content, current.nextSibling);
+    }
+
+    if (last) {
+      const range = document.createRange();
+      range.selectNodeContents(last);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    syncBody();
+  }
+
+  function applyTool({ id, command, block }: Tool) {
+    restoreSelection();
+    const selectedText = document.getSelection()?.toString() || '';
+
+    if (block) {
+      const isActive = String(document.queryCommandValue('formatBlock')).toLowerCase() === block;
+      document.execCommand('formatBlock', false, isActive ? 'p' : block);
+    } else if (command) {
+      document.execCommand(command);
+    } else if (id === 'mark') {
+      if (selectedText) document.execCommand('insertHTML', false, `<mark>${escapeAttribute(selectedText)}</mark>`);
+    } else if (id === 'link') {
+      const url = window.prompt(lang('NilakWriterLinkPrompt'), 'https://');
+      if (url && /^https?:\/\/\S+$/.test(url)) {
+        restoreSelection();
+        if (selectedText) {
+          document.execCommand('createLink', false, url);
+        } else {
+          document.execCommand('insertHTML', false, `<a href="${escapeAttribute(url)}">${escapeAttribute(url)}</a>`);
+        }
+      }
+    } else if (id === 'tip') {
+      insertBlock(`<blockquote data-callout="TIP">${escapeAttribute(selectedText) || '<br>'}</blockquote><p><br></p>`);
+    } else if (id === 'photo') {
+      fileInputRef.current!.click();
+      return;
+    } else if (id === 'table') {
+      insertBlock(buildTableHtml());
+    } else if (id === 'quiz') {
+      insertBlock(buildQuizHtml());
+    } else if (id === 'divider') {
+      insertBlock('<hr><p><br></p>');
+    }
+
+    syncBody();
+  }
+
+  const handleTitleChange = useLastCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { value } = e.currentTarget;
-    setDraft((current) => ({ ...current, title: value }));
+    setDraft((current) => ({ ...current, title: value.replace(/\n/g, ' ') }));
   });
 
   const handleSubtitleChange = useLastCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,9 +228,44 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
     setDraft((current) => ({ ...current, subtitle: value }));
   });
 
-  const handleBodyChange = useLastCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { value } = e.currentTarget;
-    setDraft((current) => ({ ...current, body: value }));
+  const handleTitleKeyDown = useLastCallback((e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== 'Enter') return;
+
+    e.preventDefault();
+    const next = e.currentTarget.nextElementSibling as HTMLElement | null;
+    (next?.tagName === 'INPUT' ? next : editorRef.current)?.focus();
+  });
+
+  // Pasted pages keep their headings, lists, bold text and links; Markdown text arrives formatted
+  const handlePaste = useLastCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    if (!html && !text) return;
+
+    e.preventDefault();
+    if (html) {
+      document.execCommand('insertHTML', false, sanitizePastedHtml(html));
+    } else if (getIsMarkdownLike(text)) {
+      document.execCommand('insertHTML', false, markdownToEditorHtml(text, {}));
+    } else {
+      document.execCommand('insertText', false, text);
+    }
+    syncBody();
+  });
+
+  const handleEditorClick = useLastCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const option = target.closest<HTMLElement>('[data-block="quiz"] li');
+    if (option && e.clientX - option.getBoundingClientRect().left < QUIZ_MARK_WIDTH) {
+      option.parentElement!.querySelectorAll('li').forEach((item) => item.removeAttribute('data-correct'));
+      option.dataset.correct = 'true';
+      syncBody();
+      return;
+    }
+
+    // Links open on Ctrl or Cmd click, like in other editors; a plain click places the caret
+    const link = target.closest('a');
+    if (link && (e.ctrlKey || e.metaKey)) window.open(link.href, '_blank', 'noopener');
   });
 
   const handleMediaSelect = useLastCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,15 +273,15 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
     e.currentTarget.value = '';
     if (!files.length) return;
 
-    const added: Record<string, File> = {};
-    const lines = files.map((file, index) => {
+    const html = files.map((file, index) => {
       const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `media/${Date.now()}-${index}.${extension}`;
-      added[path] = file;
-      return `![](${path})`;
+      mediaRef.current[path] = file;
+      return buildFigureHtml(
+        path, URL.createObjectURL(file), '', file.type.startsWith('video/'), lang('NilakWriterCaption'),
+      );
     });
-    setMedia((current) => ({ ...current, ...added }));
-    insertText(`${lines.join('\n')}\n`, '', true);
+    insertBlock(html.join(''));
   });
 
   const handlePublish = useLastCallback(async () => {
@@ -145,8 +293,8 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
       title: draft.title.trim(),
       subtitle: draft.subtitle.trim(),
       author: getUserFullName(lang, currentUser) || channel.title,
-      body: draft.body,
-      media,
+      body: editorToMarkdown(editorRef.current!),
+      media: mediaRef.current,
     };
     const file = await buildBarruuFile(barruuDraft);
 
@@ -172,87 +320,77 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
         <button type="button" className={styles.iconButton} aria-label={lang('Back')} onClick={onClose}>
           <Icon name="arrow-left" />
         </button>
-        <span className={styles.writerTitle}>{lang('NilakCreateBarruu')}</span>
-        <button
-          type="button"
-          className={buildClassName(styles.secondary, styles.previewToggle, isPreview && styles.secondaryActive)}
-          onClick={() => setIsPreview(!isPreview)}
-        >
-          <Icon name="eye" />
-          {' '}
-          {lang('NilakWriterPreview')}
-        </button>
+        <span className={styles.writerTitle}>
+          {lang('NilakCreateBarruu')}
+          <span className={styles.writerChannel}>{channel.title}</span>
+        </span>
         <button type="button" className={styles.primary} disabled={!canPublish} onClick={handlePublish}>
           {lang('NilakWriterPublish')}
         </button>
       </div>
 
-      {/* Wide screens show the article beside the editor, updated as the writer types */}
-      <div className={buildClassName(styles.split, isPreview && styles.splitPreview)}>
-        <div className={styles.editor}>
-          <input
-            className={styles.titleInput}
-            value={draft.title}
-            placeholder={lang('NilakWriterTitle')}
-            dir="auto"
-            onChange={handleTitleChange}
-          />
-          <input
-            className={styles.subtitleInput}
-            value={draft.subtitle}
-            placeholder={lang('NilakWriterSubtitle')}
-            dir="auto"
-            onChange={handleSubtitleChange}
-          />
-          <div className={styles.toolbar}>
-            {SNIPPETS.map(({
-              icon, labelKey, before, after, isBlock,
-            }) => (
+      {/* Buttons keep the caret in the text: they act on mouse down, before the editor would lose focus */}
+      <div className={styles.toolbar} role="toolbar">
+        {TOOL_GROUPS.map((group) => (
+          <div key={group[0].id} className={styles.toolGroup}>
+            {group.map((tool) => (
               <button
-                key={labelKey}
+                key={tool.id}
                 type="button"
-                className={styles.iconButton}
-                title={lang(labelKey)}
-                aria-label={lang(labelKey)}
-                onClick={() => insertText(before, after, isBlock)}
+                className={buildClassName(styles.tool, activeTools.includes(tool.id) && styles.toolActive)}
+                title={lang(tool.labelKey)}
+                aria-label={lang(tool.labelKey)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applyTool(tool);
+                }}
               >
-                <Icon name={icon} />
+                <Icon name={tool.icon} />
               </button>
             ))}
-            <button
-              type="button"
-              className={styles.iconButton}
-              title={lang('NilakWriterPhoto')}
-              aria-label={lang('NilakWriterPhoto')}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Icon name="camera" />
-            </button>
           </div>
-          <textarea
-            ref={bodyRef}
-            className={styles.bodyInput}
-            value={draft.body}
-            placeholder={lang('NilakWriterBody')}
-            dir="auto"
-            onChange={handleBodyChange}
-          />
-          <input
-            ref={fileInputRef}
-            className={styles.fileInput}
-            type="file"
-            multiple
-            accept={IMAGE_ACCEPT}
-            onChange={handleMediaSelect}
-          />
-        </div>
-        <article className={buildClassName(readerStyles.article, styles.preview)} dir="auto" aria-live="polite">
-          <span className={readerStyles.tag}>✿ BARRUU</span>
-          <h1 className={readerStyles.title}>{draft.title || lang('NilakWriterTitle')}</h1>
-          {draft.subtitle && <p className={readerStyles.subtitle}>{draft.subtitle}</p>}
-          <NilakBarruuBody markdown={draft.body} mediaUrls={mediaUrls} />
-        </article>
+        ))}
       </div>
+
+      <article className={buildClassName(readerStyles.article, styles.page)} dir="auto">
+        <span className={readerStyles.tag}>BARRUU</span>
+        <textarea
+          className={buildClassName(readerStyles.title, styles.titleInput)}
+          value={draft.title}
+          placeholder={lang('NilakWriterTitle')}
+          rows={1}
+          dir="auto"
+          onChange={handleTitleChange}
+          onKeyDown={handleTitleKeyDown}
+        />
+        <input
+          className={buildClassName(readerStyles.subtitle, styles.subtitleInput)}
+          value={draft.subtitle}
+          placeholder={lang('NilakWriterSubtitle')}
+          dir="auto"
+          onChange={handleSubtitleChange}
+          onKeyDown={handleTitleKeyDown}
+        />
+        <div
+          ref={editorRef}
+          className={buildClassName(styles.editable, !draft.body && styles.editableEmpty)}
+          contentEditable
+          role="textbox"
+          aria-multiline
+          data-placeholder={lang('NilakWriterBody')}
+          onInput={syncBody}
+          onPaste={handlePaste}
+          onClick={handleEditorClick}
+        />
+      </article>
+      <input
+        ref={fileInputRef}
+        className={styles.fileInput}
+        type="file"
+        multiple
+        accept={IMAGE_ACCEPT}
+        onChange={handleMediaSelect}
+      />
     </div>
   );
 };

@@ -3407,7 +3407,6 @@ export interface LangPair {
   'NilakWriterTitle': undefined;
   'NilakWriterSubtitle': undefined;
   'NilakWriterBody': undefined;
-  'NilakWriterPreview': undefined;
   'NilakWriterPublish': undefined;
   'NilakWriterHeading': undefined;
   'NilakWriterBold': undefined;
@@ -3428,6 +3427,13 @@ export interface LangPair {
   'NilakBarruuPublished': undefined;
   'NilakWriteBarruu': undefined;
   'NilakArticle': undefined;
+  'NilakWriterSubheading': undefined;
+  'NilakWriterStrike': undefined;
+  'NilakWriterHighlight': undefined;
+  'NilakWriterLink': undefined;
+  'NilakWriterNumbered': undefined;
+  'NilakWriterLinkPrompt': undefined;
+  'NilakWriterCaption': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

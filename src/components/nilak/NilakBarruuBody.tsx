@@ -111,7 +111,7 @@ const NilakBarruuBody = ({ markdown, mediaUrls }: OwnProps) => {
       case 'numbers':
         return <ol className={styles.list}>{block.items.map((item) => <li>{renderMarkup(item)}</li>)}</ol>;
       case 'divider':
-        return <div className={styles.divider} aria-hidden>✿ ✿ ✿</div>;
+        return <div className={styles.divider} aria-hidden>• • •</div>;
       case 'code':
         return <pre className={styles.code}>{block.text}</pre>;
       case 'image':

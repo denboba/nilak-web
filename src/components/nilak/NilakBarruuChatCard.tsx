@@ -9,6 +9,8 @@ import { openNilakRead } from './helpers/nilakTab';
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
+import Icon from '../common/icons/Icon';
+
 import styles from './NilakBarruuChatCard.module.scss';
 
 type OwnProps = {
@@ -26,10 +28,10 @@ const NilakBarruuChatCard = ({ message }: OwnProps) => {
 
   return (
     <div className={styles.card} onClick={handleOpen}>
-      <div className={styles.cover}>✿</div>
+      <div className={styles.cover}><Icon name="article" /></div>
       <div className={styles.info}>
         <span className={styles.tag}>
-          ✿ BARRUU
+          BARRUU
           {Boolean(minutes) && ` · ${lang('NilakReadMinutes', { count: minutes }, { pluralValue: minutes })}`}
         </span>
         <span className={styles.title}>{renderText(getBarruuTitle(message))}</span>

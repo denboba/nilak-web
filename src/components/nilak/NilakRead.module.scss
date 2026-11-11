@@ -293,18 +293,6 @@
   object-fit: cover;
 }
 
-.barruuBanner {
-  display: grid;
-  place-items: center;
-
-  height: 6rem;
-
-  font-size: 2.5rem;
-  color: rgba(255, 255, 255, 0.85);
-
-  background: linear-gradient(135deg, #7138d5, #c9a2f2);
-}
-
 .body {
   display: flex;
   flex-direction: column;

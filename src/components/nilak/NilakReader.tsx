@@ -183,7 +183,7 @@ const NilakReader = ({
         <article className={styles.article} dir="auto" onClickCapture={handleLinkClick}>
           {message && isBarruu && (
             <>
-              <span className={styles.tag}>✿ BARRUU</span>
+              <span className={styles.tag}>BARRUU</span>
               <h1 className={styles.title}>{renderText(getBarruuTitle(message))}</h1>
               {subtitle && <p className={styles.subtitle}>{renderText(subtitle, ['emoji', 'br'])}</p>}
             </>

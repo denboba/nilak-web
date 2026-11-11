@@ -44,7 +44,6 @@ const NilakReadCard = ({
   return (
     <article className={buildClassName(styles.card, noChannel && styles.embedded)} onClick={handleOpen}>
       {coverUrl && <img className={styles.cover} src={coverUrl} alt="" draggable={false} />}
-      {!coverUrl && isBarruu && <div className={styles.barruuBanner} aria-hidden>✿</div>}
 
       <div className={styles.body}>
         {!noChannel && chat && (
@@ -54,7 +53,7 @@ const NilakReadCard = ({
           </div>
         )}
         <span className={styles.tag}>
-          {isBarruu ? '✿ BARRUU' : lang('NilakLongRead')}
+          {isBarruu ? 'BARRUU' : lang('NilakLongRead')}
           {Boolean(minutes) && ` · ${lang('NilakReadMinutes', { count: minutes }, { pluralValue: minutes })}`}
         </span>
         <h3 className={styles.title} dir="auto">{renderText(title)}</h3>

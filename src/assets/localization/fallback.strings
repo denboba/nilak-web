@@ -4548,7 +4548,6 @@
 "NilakWriterTitle" = "Title";
 "NilakWriterSubtitle" = "Subtitle (optional)";
 "NilakWriterBody" = "Write your Barruu…";
-"NilakWriterPreview" = "Preview";
 "NilakWriterPublish" = "Publish";
 "NilakWriterHeading" = "Heading";
 "NilakWriterBold" = "Bold";
@@ -4571,3 +4570,10 @@
 "NilakBarruuPublished" = "Your Barruu is being published. It will appear in Read in a moment.";
 "NilakWriteBarruu" = "Write a Barruu";
 "NilakArticle" = "Article";
+"NilakWriterSubheading" = "Subheading";
+"NilakWriterStrike" = "Strikethrough";
+"NilakWriterHighlight" = "Highlight";
+"NilakWriterLink" = "Link";
+"NilakWriterNumbered" = "Numbered list";
+"NilakWriterLinkPrompt" = "Link address";
+"NilakWriterCaption" = "Add a caption";
