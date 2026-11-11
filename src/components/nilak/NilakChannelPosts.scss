@@ -14,13 +14,19 @@
     width: var(--max-width);
   }
 
+  // The photo sits in the post's padding (negative side margins), so it is wider than the text by both margins
   .message-content.has-solid-background .media-inner {
     --media-max-height: 32rem;
 
-    width: 100%;
+    width: calc(100% + 1rem);
 
     &::before {
       width: 100%;
+    }
+
+    > .full-media,
+    > .thumbnail {
+      object-fit: cover;
     }
   }
 }
