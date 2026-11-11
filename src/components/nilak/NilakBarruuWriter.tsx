@@ -5,7 +5,6 @@ import { getActions, getGlobal } from '../../global';
 
 import type { ApiChat, ApiPeer, ApiSticker, ApiVideo } from '../../api/types';
 import type { IconName } from '../../types/icons';
-import { MAIN_THREAD_ID } from '../../api/types';
 
 import { getMainUsername, getUserFullName } from '../../global/helpers';
 import { getPeerTitle } from '../../global/helpers/peers';
@@ -20,6 +19,7 @@ import {
 import {
   decodeNilakDocument, encodeNilakDocument, fetchCustomEmojiUrl, fetchNilakDocumentUrl,
 } from './helpers/nilakDocuments';
+import publishBarruu from './helpers/publishBarruu';
 import useMentionPeers from './helpers/useMentionPeers';
 
 import useLang from '../../hooks/useLang';
@@ -94,7 +94,7 @@ const MENTION_LIST_HEIGHT = 272;
 type TextDraft = { title: string; subtitle: string; body: string };
 
 const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
-  const { sendMessage, showNotification } = getActions();
+  const { showNotification } = getActions();
   const lang = useLang();
   const editorRef = useRef<HTMLDivElement>();
   const fileInputRef = useRef<HTMLInputElement>();
@@ -473,15 +473,28 @@ const NilakBarruuWriter = ({ channel, onClose, onPublished }: OwnProps) => {
     } catch (err) {
       // Nothing to do when storage is unavailable
     }
-    // Published straight to the channel, like any file sent from the composer
-    const attachment = await buildAttachment(file.name, file);
-    sendMessage({
-      messageList: { chatId: channel.id, threadId: MAIN_THREAD_ID, type: 'thread' },
-      text: buildBarruuCaption(barruuDraft),
-      attachments: [attachment],
+    const [packageAttachment, mediaEntries] = await Promise.all([
+      buildAttachment(file.name, file),
+      Promise.all(Object.entries(mediaRef.current).map(async ([path, mediaFile]) => (
+        [path, await buildAttachment(mediaFile.name, mediaFile)] as const
+      ))),
+    ]);
+    onPublished();
+    await publishBarruu({
+      chatId: channel.id,
+      title: barruuDraft.title,
+      subtitle: barruuDraft.subtitle,
+      body: barruuDraft.body,
+      mediaAttachments: Object.fromEntries(mediaEntries),
+      packageAttachment,
+      caption: buildBarruuCaption(barruuDraft),
+      texts: {
+        quiz: lang('NilakWriterQuiz'),
+        showAnswer: lang('NilakRichShowAnswer'),
+        footer: lang('NilakRichFooter'),
+      },
     });
     showNotification({ message: { key: 'NilakBarruuPublished' } });
-    onPublished();
   });
 
   return (

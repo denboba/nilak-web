@@ -3438,6 +3438,8 @@ export interface LangPair {
   'NilakWriterEmoji': undefined;
   'NilakWriterMention': undefined;
   'NilakWriterEmbed': undefined;
+  'NilakRichShowAnswer': undefined;
+  'NilakRichFooter': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

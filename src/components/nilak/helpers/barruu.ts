@@ -121,7 +121,9 @@ export function getReadTitle(message: ApiMessage) {
 
   const { richMessage } = message.content;
   if (richMessage) {
-    const titleBlock = richMessage.blocks.find((block) => block.type === 'title' || block.type === 'header');
+    const titleBlock = richMessage.blocks.find((block) => (
+      block.type === 'title' || block.type === 'header' || block.type === 'heading1'
+    ));
     const title = titleBlock && 'text' in titleBlock ? getRichTextPlainText(titleBlock.text) : '';
     return shortenTitle((title || getRichMessagePreviewText(richMessage, MAX_LIST_TITLE_LENGTH)).trim());
   }
