@@ -69,6 +69,9 @@ const WHEN_OPTIONS: { code: string; label: string; delay: number }[] = [
   { code: '1d', label: 'Tomorrow, same time', delay: DAY },
 ];
 const MAX_DUE_PER_RUN = 50;
+// Telegram's limit for a topic name
+const ASK_TITLE_MAX = 128;
+const ASK_ANONYMOUS_NOTE = 'Asked anonymously';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS channels (
@@ -149,6 +152,10 @@ async function handlePrivateMessage(env: Env, message: TgMessage) {
     await sendScheduledList(env, userId);
     return;
   }
+  if (command === '/askanon') {
+    await askAnonymously(env, userId, message.text || '');
+    return;
+  }
   if (command === '/cancel') {
     await env.DB.prepare('DELETE FROM pending WHERE owner_id = ?').bind(userId).run();
     await sendText(env, userId, 'Cancelled.');
@@ -183,6 +190,45 @@ async function handlePrivateMessage(env: Env, message: TgMessage) {
       inline_keyboard: channels.map((channel) => [{ text: channel.title, callback_data: `ch:${channel.chat_id}` }]),
     },
   });
+}
+
+// Ask, anonymously: Nilak sends `/askanon <board chat id>`, the question and its details on the next lines; the bot
+// creates the topic on the board under its own name, so other members do not see who asked
+async function askAnonymously(env: Env, userId: number, text: string) {
+  const [header, title, ...rest] = text.split('\n');
+  const boardId = Number(header.split(/\s+/)[1]);
+  const question = title?.trim().slice(0, ASK_TITLE_MAX);
+  if (!boardId || !question) {
+    await sendText(env, userId, 'Ask anonymously from a community’s Ask tab in Nilak.');
+    return;
+  }
+
+  // Only members of the board may ask in it
+  const member = await requestTelegram<{ status: string }>(env, 'getChatMember', { chat_id: boardId, user_id: userId });
+  if (!member.ok || member.result?.status === 'left' || member.result?.status === 'kicked') {
+    await sendText(env, userId, 'Join the community’s Ask group first, then ask again.');
+    return;
+  }
+
+  const topic = await requestTelegram<{ message_thread_id: number }>(
+    env, 'createForumTopic', { chat_id: boardId, name: question },
+  );
+  if (!topic.ok || !topic.result) {
+    await sendText(
+      env,
+      userId,
+      'I can’t post there yet: an admin has to add me to the Ask group as an admin who can manage topics.',
+    );
+    return;
+  }
+
+  const details = rest.join('\n').trim();
+  await callTelegram(env, 'sendMessage', {
+    chat_id: boardId,
+    message_thread_id: topic.result.message_thread_id,
+    text: details ? `${details}\n\n${ASK_ANONYMOUS_NOTE}` : ASK_ANONYMOUS_NOTE,
+  });
+  await sendText(env, userId, `Your question is posted anonymously: “${question}”`);
 }
 
 async function handleCallback(env: Env, query: TgCallbackQuery) {
