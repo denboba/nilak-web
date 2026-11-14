@@ -1,8 +1,9 @@
-import type { ApiMessage } from '../../api/types';
+import type { ApiChat, ApiMessage } from '../../api/types';
 import type { GlobalState, TabArgs } from '../types';
 
 import { getCurrentTabId } from '../../util/establishMultitabRole';
-import { selectChat } from './chats';
+import { isChatChannel, isChatCommunity } from '../helpers';
+import { selectChat, selectChatFullInfo } from './chats';
 import { selectCurrentMessageList } from './messages';
 import { selectTabState } from './tabs';
 import { selectUserFullInfo } from './users';
@@ -33,4 +34,29 @@ export function selectNilakChatsHighlight<T extends GlobalState>(
 
   const channel = global.currentUserId ? selectNilakProfileChannel(global, global.currentUserId) : undefined;
   return channel && selectCurrentMessageList(global, tabId)?.chatId === channel.id ? 'create' : 'chats';
+}
+
+// The communities the person belongs to: `loadCommunities` puts them in the active chat list
+export function selectNilakJoinedCommunityIds<T extends GlobalState>(global: T) {
+  return (global.chats.listIds.active || []).filter((id) => {
+    const chat = selectChat(global, id);
+    return chat && isChatCommunity(chat);
+  });
+}
+
+// The channels whose posts a community feed shows: joined ones, and for one community also the ones open to view
+export function selectNilakCommunityChannels<T extends GlobalState>(global: T, communityId?: string) {
+  const communityIds = communityId ? [communityId] : selectNilakJoinedCommunityIds(global);
+  const channels = new Map<string, ApiChat>();
+  communityIds.forEach((id) => {
+    selectChatFullInfo(global, id)?.linkedPeers?.forEach(({ peerId, canViewHistory }) => {
+      const chat = selectChat(global, peerId);
+      if (!chat || !isChatChannel(chat) || chat.isRestricted) return;
+      if (chat.isNotJoined && !(communityId && canViewHistory)) return;
+
+      channels.set(chat.id, chat);
+    });
+  });
+
+  return Array.from(channels.values());
 }

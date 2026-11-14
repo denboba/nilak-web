@@ -4584,3 +4584,10 @@
 "NilakRichShowAnswer" = "Show the answer";
 "NilakRichFooter" = "A Barruu, written on Nilak · nilak.org";
 "NilakReadPick" = "Choose something to read, or write your own Barruu";
+"NilakCommunities" = "Communities";
+"NilakCommunitiesLatest" = "Latest posts";
+"NilakCommunitiesEmptyTitle" = "Bring people together";
+"NilakCommunitiesEmptyText" = "A community keeps a class, school, university or club in one place. Open a community's link to join it, or create one in Nilak for Android.";
+"NilakCommunityFeed" = "Feed";
+"NilakCommunityAbout" = "About";
+"NilakCommunityNoPosts" = "No posts yet. Posts from this community's channels will show up here.";

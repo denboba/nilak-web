@@ -3441,6 +3441,13 @@ export interface LangPair {
   'NilakRichShowAnswer': undefined;
   'NilakRichFooter': undefined;
   'NilakReadPick': undefined;
+  'NilakCommunities': undefined;
+  'NilakCommunitiesLatest': undefined;
+  'NilakCommunitiesEmptyTitle': undefined;
+  'NilakCommunitiesEmptyText': undefined;
+  'NilakCommunityFeed': undefined;
+  'NilakCommunityAbout': undefined;
+  'NilakCommunityNoPosts': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

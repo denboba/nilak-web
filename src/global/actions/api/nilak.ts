@@ -2,7 +2,7 @@ import type { ApiChat, ApiMessage } from '../../../api/types';
 import type { GlobalState } from '../../types';
 import { MAIN_THREAD_ID } from '../../../api/types';
 
-import { GLOBAL_SUGGESTED_CHANNELS_ID } from '../../../config';
+import { GLOBAL_SUGGESTED_CHANNELS_ID, NILAK_ALL_COMMUNITIES_KEY } from '../../../config';
 import { buildCollectionByKey } from '../../../util/iteratees';
 import { callApi } from '../../../api/gramjs';
 import { isChatChannel } from '../../helpers';
@@ -11,7 +11,7 @@ import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
 import {
-  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectSimilarChannelIds,
+  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectNilakCommunityChannels, selectSimilarChannelIds,
 } from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
@@ -54,6 +54,24 @@ addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void
     cursorByChatId,
     hasMore: Object.values(cursorByChatId).some((cursor) => cursor !== false),
   });
+  setGlobal(global);
+});
+
+addActionHandler('loadNilakCommunityFeed', async (global, actions, payload): Promise<void> => {
+  const { communityId } = payload || {};
+  const key = communityId || NILAK_ALL_COMMUNITIES_KEY;
+  if (global.nilakCommunityFeed?.[key]?.isLoading) return;
+
+  const channels = selectNilakCommunityChannels(global, communityId);
+  global = updateNilakCommunityFeed(global, key, { isLoading: true });
+  setGlobal(global);
+
+  const { posts, albums } = await fetchChannelPosts(channels, {});
+
+  global = getGlobal();
+  // Album photos live with Home's, where the post cards look them up
+  global = updateNilakFeed(global, { albums: { ...global.nilakFeed?.albums, ...albums } });
+  global = updateNilakCommunityFeed(global, key, { isLoading: false, posts });
   setGlobal(global);
 });
 
@@ -229,6 +247,21 @@ function updateNilakFeed<T extends GlobalState>(global: T, update: Partial<NonNu
     nilakFeed: {
       ...global.nilakFeed,
       ...update,
+    },
+  };
+}
+
+function updateNilakCommunityFeed<T extends GlobalState>(
+  global: T, key: string, update: NonNullable<GlobalState['nilakCommunityFeed']>[string],
+): T {
+  return {
+    ...global,
+    nilakCommunityFeed: {
+      ...global.nilakCommunityFeed,
+      [key]: {
+        ...global.nilakCommunityFeed?.[key],
+        ...update,
+      },
     },
   };
 }

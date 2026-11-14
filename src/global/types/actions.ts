@@ -469,6 +469,9 @@ export interface ActionPayloads {
     shouldRefresh?: true;
     isMore?: true;
   } | undefined;
+  loadNilakCommunityFeed: {
+    communityId?: string;
+  } | undefined;
   loadNilakReels: {
     isMore?: true;
   } | undefined;

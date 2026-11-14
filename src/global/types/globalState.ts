@@ -128,6 +128,11 @@ export type GlobalState = {
     cursorByChatId?: Record<string, number | false>;
     hasMore?: boolean;
   };
+  // Nilak: posts of the channels in communities, by community ID or `NILAK_ALL_COMMUNITIES_KEY`, kept in memory only
+  nilakCommunityFeed?: Record<string, {
+    isLoading?: boolean;
+    posts?: ApiMessage[];
+  }>;
   // Nilak: Reels, short vertical videos from followed and suggested channels, kept in memory only
   nilakReels?: {
     isLoading?: boolean;

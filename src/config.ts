@@ -119,6 +119,8 @@ export const STORY_VIEWS_MIN_CONTACTS_FILTER = 20;
 export const MEDIA_TIMESTAMP_SAVE_MINIMUM_DURATION = 30; // 30s
 
 export const GLOBAL_SUGGESTED_CHANNELS_ID = 'global';
+// Nilak: the Communities tab's feed, from the channels of every joined community
+export const NILAK_ALL_COMMUNITIES_KEY = 'all';
 
 // As in Telegram for Android
 // https://github.com/DrKLO/Telegram/blob/51e9947527/TMessagesProj/src/main/java/org/telegram/messenger/MediaDataController.java#L7781

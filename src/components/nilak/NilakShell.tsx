@@ -17,6 +17,7 @@ import { useFolderManagerForUnreadCounters } from '../../hooks/useFolderManager'
 import useLang from '../../hooks/useLang';
 import useLastCallback from '../../hooks/useLastCallback';
 
+import NilakCommunities from './NilakCommunities';
 import NilakCreate from './NilakCreate';
 import NilakHome from './NilakHome';
 import NilakMessageToast from './NilakMessageToast';
@@ -36,7 +37,7 @@ type OwnProps = {
 
 type NavItem = {
   tab: NilakTab;
-  langKey: 'NilakHome' | 'NilakReels' | 'NilakRead' | 'Chats' | 'NilakProfile';
+  langKey: 'NilakHome' | 'NilakReels' | 'NilakRead' | 'NilakCommunities' | 'Chats' | 'NilakProfile';
   path: string;
 };
 
@@ -51,6 +52,11 @@ const NAV_ITEMS: NavItem[] = [
     tab: 'read',
     langKey: 'NilakRead',
     path: 'M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z',
+  },
+  {
+    tab: 'communities',
+    langKey: 'NilakCommunities',
+    path: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20a6 6 0 0 1 12 0M16.5 11a3 3 0 1 0 0-6M17 14a5 5 0 0 1 4 5',
   },
   { tab: 'chats', langKey: 'Chats', path: 'M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z' },
   { tab: 'profile', langKey: 'NilakProfile', path: 'M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM4 21a8 8 0 0 1 16 0' },
@@ -109,6 +115,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'home') return <NilakHome isNarrow={isNarrow} />;
     if (tab === 'read') return <NilakRead isNarrow={isNarrow} />;
     if (tab === 'reels') return <NilakReels />;
+    if (tab === 'communities') return <NilakCommunities />;
     if (tab === 'create') return <NilakCreate chatId={barruuChatId} />;
 
     return undefined;

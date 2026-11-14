@@ -42,7 +42,7 @@ Then:
 | `src/components/middle/MessageList.tsx` | `nilak-wide-posts` class on channels (styles in `nilak/NilakChannelPosts.scss`) |
 | `src/api/gramjs/methods/symbols.ts` | `encodeNilakDocument`, `decodeNilakDocument` for stickers and GIFs in a Barruu |
 | `src/util/localization/index.ts` | `brandString` at the end of `getString` |
-| `src/global/types/globalState.ts`, `actions.ts` | `nilakFeed`, `nilakReels`, `nilakProfile`; the `loadNilak*` actions |
+| `src/global/types/globalState.ts`, `actions.ts` | `nilakFeed`, `nilakReels`, `nilakProfile`, `nilakCommunityFeed`; the `loadNilak*` actions |
 | `src/global/actions/all.ts`, `selectors/index.ts` | registration of the Nilak action and selector files |
 | `src/config.ts` | `APP_NAME`, `IS_NILAK_SHELL`, `LIGHT_THEME_BG_COLOR`, `DARK_THEME_BG_COLOR` |
 | `src/styles/themes.json`, `_variables.scss` | lilac colours (`--color-primary`, `--color-active`, spinner) |
