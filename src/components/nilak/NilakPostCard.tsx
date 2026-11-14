@@ -2,7 +2,7 @@ import { memo } from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import type {
-  ApiChat, ApiMessage, ApiReaction, ApiReactionCount, ApiThreadInfo,
+  ApiChat, ApiKeyboardButton, ApiMessage, ApiReaction, ApiReactionCount, ApiThreadInfo,
 } from '../../api/types';
 
 import { getReactionKey } from '../../global/helpers/reactions';
@@ -22,6 +22,7 @@ import useLastCallback from '../../hooks/useLastCallback';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import InlineButtons from '../middle/message/InlineButtons';
 import NilakAlbumCarousel from './NilakAlbumCarousel';
 import NilakMediaTile from './NilakMediaTile';
 import NilakReadCard from './NilakReadCard';
@@ -48,7 +49,7 @@ const NilakPostCard = ({
   post, isSuggested, chat, liveMessage, threadInfo, album,
 }: OwnProps & StateProps) => {
   const {
-    openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction, openThread,
+    openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction, openThread, clickBotInlineButton,
   } = getActions();
   const lang = useLang();
   const [isExpanded, expand] = useFlag();
@@ -86,6 +87,10 @@ const NilakPostCard = ({
       originMessageId: commentsInfo.originMessageId,
       originChannelId: commentsInfo.originChannelId,
     });
+  });
+
+  const handleInlineButtonClick = useLastCallback((button: ApiKeyboardButton) => {
+    clickBotInlineButton({ chatId, messageId, button });
   });
 
   const handleShare = useLastCallback(() => {
@@ -145,6 +150,16 @@ const NilakPostCard = ({
       )}
       {isFoldable && !isExpanded && (
         <button type="button" className={styles.more} onClick={expand}>{lang('ShowMore')}</button>
+      )}
+
+      {message.inlineButtons && (
+        // The post's own buttons work as in the channel: links, mini apps (like View Replies), votes
+        <InlineButtons
+          className={styles.buttons}
+          inlineButtons={message.inlineButtons}
+          isEphemeral={message.isEphemeral}
+          onClick={handleInlineButtonClick}
+        />
       )}
 
       <div className={styles.actions}>

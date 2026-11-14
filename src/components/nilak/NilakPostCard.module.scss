@@ -135,14 +135,18 @@
 
   width: 3.5rem;
   height: 3.5rem;
-  border-radius: 50%;
-
   border: none;
+  border-radius: 50%;
 
   font-size: 1.75rem;
   color: #fff;
 
   background: rgba(42, 29, 64, 0.55);
+}
+
+// The post's inline buttons, spaced like the rest of the card
+.buttons {
+  margin-top: 0.75rem;
 }
 
 .actions {
