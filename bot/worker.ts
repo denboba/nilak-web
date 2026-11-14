@@ -9,8 +9,6 @@
 // Setup (once, after the first deploy): open https://nilak.org/bot/setup to register the webhook and commands.
 // Secrets: NILAK_BOT_TOKEN (Cloudflare → nilak-web → Settings → Variables and Secrets). Database: D1 `nilak-bots`.
 
-import { runTagCommand, TAG_COMMANDS } from './tagTest';
-
 type Env = {
   ASSETS: { fetch: (request: Request) => Promise<Response> };
   DB: D1Database;
@@ -267,11 +265,6 @@ async function handleChannelPost(env: Env, post: TgMessage) {
   if (!command?.startsWith('/') || !command.includes(`@${BOT_USERNAME.toLowerCase()}`)) return;
 
   await callTelegram(env, 'deleteMessage', { chat_id: post.chat.id, message_id: post.message_id });
-  const name = command.split(/[@\s]/)[0];
-  if (TAG_COMMANDS.has(name)) {
-    await sendText(env, post.chat.id, await runTagCommand(bindRequest(env), post.chat.id, name));
-    return;
-  }
   await connectChannel(env, post.chat);
 }
 
@@ -286,13 +279,6 @@ async function handleGroupMessage(env: Env, message: TgMessage) {
   if (member.result?.status !== 'creator' && member.result?.status !== 'administrator') return;
 
   await callTelegram(env, 'deleteMessage', { chat_id: message.chat.id, message_id: message.message_id });
-  const name = command.split(/[@\s]/)[0];
-  if (TAG_COMMANDS.has(name)) {
-    const report = await runTagCommand(bindRequest(env), message.chat.id, name);
-    // The report goes to the admin privately; in the group only when the admin has not started the bot
-    if (!await sendText(env, message.from.id, report)) await sendText(env, message.chat.id, report);
-    return;
-  }
   await connectChannel(env, message.chat, message.from.id);
 }
 
@@ -514,10 +500,6 @@ function editMessage(env: Env, message: TgMessage | undefined, text: string, rep
 
 async function callTelegram(env: Env, method: string, body: Record<string, unknown>) {
   return (await requestTelegram(env, method, body)).ok;
-}
-
-function bindRequest(env: Env) {
-  return <T = unknown>(method: string, body: Record<string, unknown>) => requestTelegram<T>(env, method, body);
 }
 
 async function requestTelegram<T = unknown>(env: Env, method: string, body: Record<string, unknown>) {
