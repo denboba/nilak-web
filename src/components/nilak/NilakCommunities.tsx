@@ -6,14 +6,11 @@ import type { GlobalState } from '../../global/types';
 
 import { NILAK_ALL_COMMUNITIES_KEY } from '../../config';
 import { selectChatFullInfo, selectNilakJoinedCommunityIds } from '../../global/selectors';
-import { getOpenedCommunityId } from './helpers/nilakTab';
 
 import useSelector, { useShallowSelector } from '../../hooks/data/useSelector';
-import useDerivedState from '../../hooks/useDerivedState';
 import useLang from '../../hooks/useLang';
 
 import Loading from '../ui/Loading';
-import NilakCommunity from './NilakCommunity';
 import NilakCommunityRow from './NilakCommunityRow';
 import NilakPostCard from './NilakPostCard';
 
@@ -26,11 +23,10 @@ type StateProps = {
 
 const MAX_POSTS = 40;
 
-// The communities the person belongs to, then the newest posts of their channels; a community opens on its page
+// A card for each community the person belongs to, opening to show its chats; then the newest posts of their channels
 const NilakCommunities = ({ posts, isLoading }: StateProps) => {
   const { loadCommunities, loadFullCommunity, loadNilakCommunityFeed } = getActions();
   const lang = useLang();
-  const openedCommunityId = useDerivedState(getOpenedCommunityId);
   const communityIds = useShallowSelector(selectNilakJoinedCommunityIds);
 
   // How many communities already have their linked chats, so the feed loads once they are known
@@ -51,16 +47,14 @@ const NilakCommunities = ({ posts, isLoading }: StateProps) => {
     if (loadedCount) loadNilakCommunityFeed();
   }, [loadedCount]);
 
-  if (openedCommunityId) {
-    return <NilakCommunity key={openedCommunityId} communityId={openedCommunityId} />;
-  }
-
   return (
     <div className={styles.root}>
       <h2 className={styles.pageTitle}>{lang('NilakCommunities')}</h2>
       {communityIds.length ? (
-        <div className={styles.card}>
-          {communityIds.map((id) => <NilakCommunityRow key={id} communityId={id} />)}
+        <div className={styles.communityList}>
+          {communityIds.map((id) => (
+            <NilakCommunityRow key={id} communityId={id} isOnly={communityIds.length === 1} />
+          ))}
         </div>
       ) : (
         <div className={styles.empty}>

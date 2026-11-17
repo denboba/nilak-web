@@ -3447,7 +3447,9 @@ export interface LangPair {
   'NilakCommunitiesEmptyText': undefined;
   'NilakCommunityFeed': undefined;
   'NilakCommunityAbout': undefined;
-  'NilakCommunityNoPosts': undefined;
+  'NilakAskShort': undefined;
+  'NilakShowChats': undefined;
+  'NilakHideChats': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

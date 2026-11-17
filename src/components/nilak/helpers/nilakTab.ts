@@ -16,9 +16,6 @@ export type NilakReadTarget = { chatId: string; messageId: number; message?: Api
 // The Barruu or long post open in the reader, over any tab
 export const [getOpenedRead, setOpenedRead] = createSignal<NilakReadTarget | undefined>();
 
-// The community open on its own page inside the Communities tab
-export const [getOpenedCommunityId, setOpenedCommunityId] = createSignal<string | undefined>();
-
 // The chat a Barruu is being written for, from its attach menu; none means the person's own channel
 export const [getBarruuChatId, setBarruuChatId] = createSignal<string | undefined>();
 
