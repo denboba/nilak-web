@@ -77,3 +77,11 @@ export function selectNilakManagedChatIds<T extends GlobalState>(global: T) {
       && (isChatChannel(chat) || isChatGroup(chat)) && (chat.isOwner || chat.adminRights);
   });
 }
+
+// Followed channels that are live now (a live stream or video chat with people in it), for the stories row
+export function selectNilakLiveChannelIds<T extends GlobalState>(global: T) {
+  return selectNilakFollowedChannelIds(global).filter((id) => {
+    const chat = selectChat(global, id);
+    return chat?.isCallActive && chat.isCallNotEmpty;
+  });
+}

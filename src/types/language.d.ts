@@ -3455,6 +3455,8 @@ export interface LangPair {
   'NilakSeeAll': undefined;
   'NilakProfileNoPosts': undefined;
   'NilakProfileAccount': undefined;
+  'NilakLiveBadge': undefined;
+  'NilakJoinLive': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

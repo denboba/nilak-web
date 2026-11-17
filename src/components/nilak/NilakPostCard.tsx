@@ -49,7 +49,8 @@ const NilakPostCard = ({
   post, isSuggested, chat, liveMessage, threadInfo, album,
 }: OwnProps & StateProps) => {
   const {
-    openChat, focusMessage, openForwardMenu, joinChannel, toggleReaction, openThread, clickBotInlineButton,
+    openChat, focusMessage, openForwardMenu, joinChannel, joinGroupCall, toggleReaction, openThread,
+    clickBotInlineButton,
   } = getActions();
   const lang = useLang();
   const [isExpanded, expand] = useFlag();
@@ -101,6 +102,10 @@ const NilakPostCard = ({
     joinChannel({ chatId });
   });
 
+  const handleJoinLive = useLastCallback(() => {
+    joinGroupCall({ chatId });
+  });
+
   if (!chat) return undefined;
 
   return (
@@ -126,6 +131,11 @@ const NilakPostCard = ({
             )}
           </div>
         </div>
+        {chat.isCallActive && chat.isCallNotEmpty && (
+          <button type="button" className={styles.live} onClick={handleJoinLive} aria-label={lang('NilakJoinLive')}>
+            {lang('NilakLiveBadge')}
+          </button>
+        )}
         {chat.isNotJoined && (
           <button type="button" className={styles.follow} onClick={handleFollow}>{lang('NilakFollow')}</button>
         )}

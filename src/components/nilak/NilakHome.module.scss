@@ -168,6 +168,46 @@
   width: 4rem;
 }
 
+.storyLive {
+  cursor: pointer;
+
+  gap: 0.625rem;
+
+  padding: 0;
+  border: none;
+
+  background: none;
+}
+
+.liveRing {
+  position: relative;
+
+  display: flex;
+
+  padding: 0.125rem;
+  border: 0.125rem solid var(--color-error);
+  border-radius: 50%;
+}
+
+.liveTag {
+  position: absolute;
+  z-index: 1;
+  bottom: -0.375rem;
+  left: 50%;
+  transform: translateX(-50%);
+
+  padding: 0 0.3125rem;
+  border: 0.125rem solid var(--color-background);
+  border-radius: 0.375rem;
+
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1rem;
+  color: var(--color-white);
+
+  background: var(--color-error);
+}
+
 .storyName {
   overflow: hidden;
 
