@@ -1,4 +1,4 @@
-import { memo } from '../../lib/teact/teact';
+import { memo, useMemo } from '../../lib/teact/teact';
 import { getActions, withGlobal } from '../../global';
 
 import type {
@@ -9,6 +9,7 @@ import { getReactionKey } from '../../global/helpers/reactions';
 import { selectChat, selectChatMessage, selectNilakAlbum } from '../../global/selectors';
 import { selectThreadInfo } from '../../global/selectors/threads';
 import buildClassName from '../../util/buildClassName';
+import { getMessageKey } from '../../util/keys/messageKey';
 import { formatCompactTimestamp, secondsToDate } from '../../util/localization/dateFormat';
 import { formatIntegerCompact } from '../../util/textFormat';
 import renderText from '../common/helpers/renderText';
@@ -22,7 +23,12 @@ import useLastCallback from '../../hooks/useLastCallback';
 
 import Avatar from '../common/Avatar';
 import Icon from '../common/icons/Icon';
+import ReactionAnimatedEmoji from '../common/reactions/ReactionAnimatedEmoji';
 import InlineButtons from '../middle/message/InlineButtons';
+import Button from '../ui/Button';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import DropdownMenu from '../ui/DropdownMenu';
+import MenuItem from '../ui/MenuItem';
 import NilakAlbumCarousel from './NilakAlbumCarousel';
 import NilakMediaTile from './NilakMediaTile';
 import NilakReadCard from './NilakReadCard';
@@ -39,23 +45,30 @@ type StateProps = {
   liveMessage?: ApiMessage;
   threadInfo?: ApiThreadInfo;
   album?: ApiMessage[];
+  areReactionsLoaded?: boolean;
 };
 
 const MAX_REACTIONS = 3;
 // Longer texts start folded with Show more, like the smart fold in Nilak for Android
 const FOLD_TEXT_LENGTH = 320;
 
+// The reaction emoji in a chip (px)
+const REACTION_SIZE = 18;
+
 const NilakPostCard = ({
-  post, isSuggested, chat, liveMessage, threadInfo, album,
+  post, isSuggested, chat, liveMessage, threadInfo, album, areReactionsLoaded,
 }: OwnProps & StateProps) => {
   const {
     openChat, focusMessage, openForwardMenu, joinChannel, joinGroupCall, toggleReaction, openThread,
-    clickBotInlineButton,
+    clickBotInlineButton, openMessageReactionPicker, copyMessageLink, leaveChannel,
   } = getActions();
   const lang = useLang();
   const [isExpanded, expand] = useFlag();
+  const [isUnfollowOpen, openUnfollow, closeUnfollow] = useFlag();
 
   const message = liveMessage || post;
+  // Telegram plays a reaction's animation for the message it was toggled on
+  const messageKey = getMessageKey(message);
   const { chatId, id: messageId } = message;
   const text = message.content.text;
   const isFoldable = Boolean(text && text.text.length > FOLD_TEXT_LENGTH);
@@ -106,6 +119,35 @@ const NilakPostCard = ({
     joinGroupCall({ chatId });
   });
 
+  // Telegram's reaction picker, which offers only the reactions this channel allows
+  const handleAddReaction = useLastCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    openMessageReactionPicker({ chatId, messageId, position: { x: left, y: top } });
+  });
+
+  const handleCopyLink = useLastCallback(() => {
+    copyMessageLink({ chatId, messageId, shouldIncludeGrouped: true });
+  });
+
+  const handleUnfollow = useLastCallback(() => {
+    closeUnfollow();
+    leaveChannel({ chatId });
+  });
+
+  const MenuButton = useMemo(() => {
+    return ({ onTrigger, isOpen }: { onTrigger: () => void; isOpen?: boolean }) => (
+      <Button
+        round
+        size="smaller"
+        color="translucent"
+        className={isOpen ? 'active' : undefined}
+        onClick={onTrigger}
+        ariaLabel={lang('AriaLabelOpenMenu')}
+        iconName="more"
+      />
+    );
+  }, [lang]);
+
   if (!chat) return undefined;
 
   return (
@@ -139,7 +181,23 @@ const NilakPostCard = ({
         {chat.isNotJoined && (
           <button type="button" className={styles.follow} onClick={handleFollow}>{lang('NilakFollow')}</button>
         )}
+        <DropdownMenu className={styles.menu} trigger={MenuButton} positionX="right">
+          <MenuItem icon="chat-badge" onClick={handleOpen}>{lang('NilakReelOpenInChat')}</MenuItem>
+          <MenuItem icon="link" onClick={handleCopyLink}>{lang('CopyLink')}</MenuItem>
+          {!chat.isNotJoined && !chat.isOwner && (
+            <MenuItem icon="logout" destructive onClick={openUnfollow}>{lang('NilakUnfollow')}</MenuItem>
+          )}
+        </DropdownMenu>
       </div>
+      <ConfirmDialog
+        isOpen={isUnfollowOpen}
+        title={lang('NilakUnfollow')}
+        text={lang('NilakUnfollowText', { title: chat.title })}
+        confirmLabel={lang('NilakUnfollow')}
+        confirmIsDestructive
+        confirmHandler={handleUnfollow}
+        onClose={closeUnfollow}
+      />
 
       {isBarruu && <NilakReadCard post={message} noChannel />}
 
@@ -180,19 +238,27 @@ const NilakPostCard = ({
             className={buildClassName(styles.reaction, chosenOrder !== undefined && styles.reactionChosen)}
             onClick={() => toggleReaction({ chatId, messageId, reaction })}
           >
-            {reaction.type === 'emoji' && renderText(reaction.emoticon)}
-            {' '}
+            {areReactionsLoaded || reaction.type !== 'emoji' ? (
+              <ReactionAnimatedEmoji
+                className={styles.reactionEmoji}
+                containerId={messageKey}
+                reaction={reaction}
+                size={REACTION_SIZE}
+              />
+            ) : renderText(reaction.emoticon)}
             {formatIntegerCompact(lang, count)}
           </button>
         ))}
+        <button
+          type="button"
+          className={buildClassName(styles.reaction, styles.addReaction)}
+          onClick={handleAddReaction}
+          aria-label={lang('NilakAddReaction')}
+        >
+          <Icon name="smile" />
+          +
+        </button>
         <div className={styles.actionsEnd}>
-          {message.viewsCount !== undefined && (
-            <span className={styles.stat}>
-              <Icon name="eye" />
-              {' '}
-              {formatIntegerCompact(lang, message.viewsCount)}
-            </span>
-          )}
           {commentsInfo && (
             <button type="button" className={styles.stat} onClick={handleComments}>
               <Icon name="comments" />
@@ -221,5 +287,6 @@ export default memo(withGlobal<OwnProps>(
     liveMessage: selectChatMessage(global, post.chatId, post.id),
     threadInfo: selectThreadInfo(global, post.chatId, post.id),
     album: selectNilakAlbum(global, post),
+    areReactionsLoaded: Boolean(global.reactions.availableReactions),
   }),
 )(NilakPostCard));

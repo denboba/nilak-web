@@ -3457,6 +3457,8 @@ export interface LangPair {
   'NilakProfileAccount': undefined;
   'NilakLiveBadge': undefined;
   'NilakJoinLive': undefined;
+  'NilakUnfollow': undefined;
+  'NilakAddReaction': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {
@@ -5716,6 +5718,9 @@ export interface LangPairWithVariables<V = LangVariable> {
   'NilakReelSpeed': {
     'speed': V;
   };
+  'NilakUnfollowText': {
+    'title': V;
+  };
 }
 
 export interface LangPairPlural {
@@ -7285,7 +7290,8 @@ export interface LangKeyGroups {
       | 'ActionChangedTitleYou'
       | 'ActionChangedTitleChannel'
       | 'ActionCreatedChatYou'
-      | 'AiToneCreated';
+      | 'AiToneCreated'
+      | 'NilakUnfollowText';
     variables: 'title';
   };
   'from,text': {

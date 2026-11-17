@@ -4600,3 +4600,6 @@
 "NilakProfileAccount" = "Account";
 "NilakLiveBadge" = "LIVE";
 "NilakJoinLive" = "Join live";
+"NilakUnfollow" = "Unfollow";
+"NilakUnfollowText" = "Stop following {title}? Its posts will leave your Home and Reels.";
+"NilakAddReaction" = "Add reaction";
