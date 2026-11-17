@@ -2,7 +2,7 @@ import type { ApiChat, ApiMessage } from '../../api/types';
 import type { GlobalState, TabArgs } from '../types';
 
 import { getCurrentTabId } from '../../util/establishMultitabRole';
-import { isChatChannel, isChatCommunity } from '../helpers';
+import { isChatChannel, isChatCommunity, isChatGroup } from '../helpers';
 import { selectChat, selectChatFullInfo } from './chats';
 import { selectCurrentMessageList } from './messages';
 import { selectTabState } from './tabs';
@@ -59,4 +59,21 @@ export function selectNilakCommunityChannels<T extends GlobalState>(global: T, c
   });
 
   return Array.from(channels.values());
+}
+
+// The channels the person follows, for the Following count on their profile
+export function selectNilakFollowedChannelIds<T extends GlobalState>(global: T) {
+  return (global.chats.listIds.active || []).filter((id) => {
+    const chat = selectChat(global, id);
+    return chat && isChatChannel(chat) && !chat.isNotJoined && !chat.isRestricted;
+  });
+}
+
+// The channels and groups the person created or administers and is still in
+export function selectNilakManagedChatIds<T extends GlobalState>(global: T) {
+  return (global.chats.listIds.active || []).filter((id) => {
+    const chat = selectChat(global, id);
+    return chat && !chat.isNotJoined && !isChatCommunity(chat) && !chat.isMonoforum
+      && (isChatChannel(chat) || isChatGroup(chat)) && (chat.isOwner || chat.adminRights);
+  });
 }

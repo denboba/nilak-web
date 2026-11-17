@@ -4588,8 +4588,13 @@
 "NilakCommunitiesLatest" = "Latest posts";
 "NilakCommunitiesEmptyTitle" = "Bring people together";
 "NilakCommunitiesEmptyText" = "A community keeps a class, school, university or club in one place. Open a community's link to join it, or create one in Nilak for Android.";
-"NilakCommunityFeed" = "Feed";
-"NilakCommunityAbout" = "About";
 "NilakAskShort" = "Ask";
 "NilakShowChats" = "Show chats";
 "NilakHideChats" = "Hide chats";
+"NilakProfilePosts" = "Posts";
+"NilakProfileFollowers" = "Followers";
+"NilakShareProfile" = "Share profile";
+"NilakManageChats" = "Your channels and groups";
+"NilakSeeAll" = "See all";
+"NilakProfileNoPosts" = "Your posts show here. Tap Create to post your first one.";
+"NilakProfileAccount" = "Account";

@@ -21,6 +21,7 @@ import NilakCommunities from './NilakCommunities';
 import NilakCreate from './NilakCreate';
 import NilakHome from './NilakHome';
 import NilakMessageToast from './NilakMessageToast';
+import NilakProfile from './NilakProfile';
 import NilakRead from './NilakRead';
 import NilakReader from './NilakReader';
 import NilakReels from './NilakReels';
@@ -64,27 +65,21 @@ const NAV_ITEMS: NavItem[] = [
 const PLUS_PATH = 'M12 5v14M5 12h14';
 
 const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
-  const { openChat, openChatWithInfo, toggleChatInfo } = getActions();
+  const { openChat, toggleChatInfo } = getActions();
   const lang = useLang();
   const tab = useDerivedState(getNilakTab);
   const openedRead = useDerivedState(getOpenedRead);
   const barruuChatId = useDerivedState(getBarruuChatId);
   const chatsHighlight = useSelector(selectNilakChatsHighlight);
   const unreadCount = useFolderManagerForUnreadCounters()[ALL_FOLDER_ID]?.notificationsCount || 0;
-  // Profile and Create show Telegram's chat columns, so the item lit up follows what is open there
+  // Telegram's own profile (from the profile's Account button) and Create show the chat columns, so the item lit up
+  // follows what is open there
   const activeTab = tab === 'chats' ? chatsHighlight : tab;
 
-  // Profile opens Telegram's own profile of the person, beside their Saved Messages
   const handleNavigate = useLastCallback((itemTab: NilakTab) => {
-    if (itemTab !== 'profile') {
-      // The profile panel belongs to Profile, so going anywhere else closes it
-      if (selectTabState(getGlobal()).chatInfo.isOwnProfile) toggleChatInfo({ force: false });
-      setNilakTab(itemTab);
-      return;
-    }
-
-    setNilakTab('chats');
-    openChatWithInfo({ id: getGlobal().currentUserId!, shouldReplaceHistory: true, isOwnProfile: true });
+    // Telegram's own profile panel (opened from the profile's Account button) closes with any other page
+    if (selectTabState(getGlobal()).chatInfo.isOwnProfile) toggleChatInfo({ force: false });
+    setNilakTab(itemTab);
   });
 
   // Create opens the person's channel to post as in Telegram; without one, the Create page explains how to set it
@@ -116,6 +111,7 @@ const NilakShell = ({ isNarrow, isChatOpen }: OwnProps) => {
     if (tab === 'read') return <NilakRead isNarrow={isNarrow} />;
     if (tab === 'reels') return <NilakReels />;
     if (tab === 'communities') return <NilakCommunities />;
+    if (tab === 'profile') return <NilakProfile />;
     if (tab === 'create') return <NilakCreate chatId={barruuChatId} />;
 
     return undefined;

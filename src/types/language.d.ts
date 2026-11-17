@@ -3445,11 +3445,16 @@ export interface LangPair {
   'NilakCommunitiesLatest': undefined;
   'NilakCommunitiesEmptyTitle': undefined;
   'NilakCommunitiesEmptyText': undefined;
-  'NilakCommunityFeed': undefined;
-  'NilakCommunityAbout': undefined;
   'NilakAskShort': undefined;
   'NilakShowChats': undefined;
   'NilakHideChats': undefined;
+  'NilakProfilePosts': undefined;
+  'NilakProfileFollowers': undefined;
+  'NilakShareProfile': undefined;
+  'NilakManageChats': undefined;
+  'NilakSeeAll': undefined;
+  'NilakProfileNoPosts': undefined;
+  'NilakProfileAccount': undefined;
 }
 
 export interface LangPairWithVariables<V = LangVariable> {

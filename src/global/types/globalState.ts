@@ -133,6 +133,13 @@ export type GlobalState = {
     isLoading?: boolean;
     posts?: ApiMessage[];
   }>;
+  // Nilak: the person's own posts on their profile, from their personal channel, kept in memory only
+  nilakProfile?: {
+    isLoading?: boolean;
+    posts?: ApiMessage[];
+    // All posts in the channel, from Telegram's count
+    postsCount?: number;
+  };
   // Nilak: Reels, short vertical videos from followed and suggested channels, kept in memory only
   nilakReels?: {
     isLoading?: boolean;

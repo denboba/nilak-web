@@ -11,7 +11,12 @@ import {
   addChatMessagesById, addChats, addUsers, replaceSimilarChannels,
 } from '../../reducers';
 import {
-  buildNilakAlbumKey, selectChat, selectChatLastMessage, selectNilakCommunityChannels, selectSimilarChannelIds,
+  buildNilakAlbumKey,
+  selectChat,
+  selectChatLastMessage,
+  selectNilakCommunityChannels,
+  selectNilakProfileChannel,
+  selectSimilarChannelIds,
 } from '../../selectors';
 
 const FOLLOWING_CHANNELS_LIMIT = 30;
@@ -24,6 +29,8 @@ const FETCH_BATCH_SIZE = 5;
 const REEL_MAX_DURATION = 180;
 const REELS_PER_CHANNEL = 10;
 const REELS_CHANNELS_PER_ROUND = 10;
+// The newest posts shown on the person's own profile
+const PROFILE_POSTS_LIMIT = 60;
 
 addActionHandler('loadNilakFeed', async (global, actions, payload): Promise<void> => {
   const { shouldRefresh, isMore } = payload || {};
@@ -72,6 +79,37 @@ addActionHandler('loadNilakCommunityFeed', async (global, actions, payload): Pro
   // Album photos live with Home's, where the post cards look them up
   global = updateNilakFeed(global, { albums: { ...global.nilakFeed?.albums, ...albums } });
   global = updateNilakCommunityFeed(global, key, { isLoading: false, posts });
+  setGlobal(global);
+});
+
+addActionHandler('loadNilakProfile', async (global): Promise<void> => {
+  const channel = global.currentUserId ? selectNilakProfileChannel(global, global.currentUserId) : undefined;
+  if (!channel || global.nilakProfile?.isLoading) return;
+
+  global = updateNilakProfile(global, { isLoading: true });
+  setGlobal(global);
+
+  const result = await callApi('fetchMessages', {
+    chat: channel, threadId: MAIN_THREAD_ID, limit: PROFILE_POSTS_LIMIT,
+  });
+
+  global = getGlobal();
+  if (!result) {
+    global = updateNilakProfile(global, { isLoading: false });
+    setGlobal(global);
+    return;
+  }
+
+  global = addUsers(global, buildCollectionByKey(result.users, 'id'));
+  global = addChats(global, buildCollectionByKey(result.chats, 'id'));
+  global = addChatMessagesById(global, channel.id, buildCollectionByKey(result.messages, 'id'));
+  // Album photos live with Home's, where the post tiles look them up
+  global = updateNilakFeed(global, { albums: { ...global.nilakFeed?.albums, ...collectAlbums(result.messages) } });
+  global = updateNilakProfile(global, {
+    isLoading: false,
+    posts: pickPosts(result.messages).sort((a, b) => b.date - a.date),
+    postsCount: result.count,
+  });
   setGlobal(global);
 });
 
@@ -246,6 +284,18 @@ function updateNilakFeed<T extends GlobalState>(global: T, update: Partial<NonNu
     ...global,
     nilakFeed: {
       ...global.nilakFeed,
+      ...update,
+    },
+  };
+}
+
+function updateNilakProfile<T extends GlobalState>(
+  global: T, update: Partial<NonNullable<GlobalState['nilakProfile']>>,
+): T {
+  return {
+    ...global,
+    nilakProfile: {
+      ...global.nilakProfile,
       ...update,
     },
   };
